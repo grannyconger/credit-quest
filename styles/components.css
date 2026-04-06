@@ -441,8 +441,10 @@
   font-weight: 800;
   flex-shrink: 0;
 }
-.quiz-choice-btn.correct .quiz-choice-letter { background: #16a34a; }
-.quiz-choice-btn.wrong   .quiz-choice-letter { background: #dc2626; }
+.quiz-choice-btn.correct .quiz-choice-letter,
+.quiz-choice-btn.correct .quiz-letter-circle  { background: #16a34a; }
+.quiz-choice-btn.wrong   .quiz-choice-letter,
+.quiz-choice-btn.wrong   .quiz-letter-circle  { background: #dc2626; }
 
 .quiz-explanation {
   background: #fffbeb;

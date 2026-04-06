@@ -585,6 +585,8 @@ body {
 .char-card:hover { transform: translateY(-2px); }
 .char-card.selected {
   transform: translateY(-2px);
+  border-color: var(--cc-primary);
+  background: color-mix(in srgb, var(--cc-primary) 8%, var(--surface));
 }
 /* Each char card has inline style --cc-primary for its specific color */
 .char-card-header {
@@ -600,9 +602,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Orbitron', monospace;
-  font-weight: 900;
-  font-size: 1rem;
+  font-size: 1.4rem;
   color: #fff;
   flex-shrink: 0;
 }
