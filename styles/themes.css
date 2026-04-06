@@ -1,0 +1,32 @@
+/* ── Character Theme CSS Variables ─────────────────────────────────────────── */
+/* Applied via body class: <body class="mario"> etc.                            */
+
+body {
+  --char-primary: #6B7280;
+  --char-accent:  #9CA3AF;
+  --char-dark:    #374151;
+}
+
+body.mario {
+  --char-primary: #DC2626;
+  --char-accent:  #F59E0B;
+  --char-dark:    #7F1D1D;
+}
+
+body.luigi {
+  --char-primary: #16A34A;
+  --char-accent:  #BBFF55;
+  --char-dark:    #14532D;
+}
+
+body.peach {
+  --char-primary: #EC4899;
+  --char-accent:  #FDE68A;
+  --char-dark:    #831843;
+}
+
+body.toad {
+  --char-primary: #7C3AED;
+  --char-accent:  #60A5FA;
+  --char-dark:    #4C1D95;
+}

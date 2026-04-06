@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Quest</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=DM+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/themes.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body class="">
+
+  <!-- ── Persistent Header ───────────────────────────────────────────────── -->
+  <header id="game-header">
+    <div id="header-left">
+      <div id="char-avatar-wrap" style="position:relative;">
+        <div id="char-avatar">⭐</div>
+      </div>
+      <div id="char-info">
+        <div id="char-name" class="orbitron" style="font-size:0.75rem;color:var(--char-accent);letter-spacing:0.08em;">—</div>
+        <div id="player-name-display" style="font-size:0.85rem;font-weight:600;color:#E5E7EB;"></div>
+      </div>
+    </div>
+
+    <div id="header-center">
+      <div id="stage-indicator">
+        <span class="stage-dot" title="Stage 1: High School"></span>
+        <span class="stage-dot" title="Stage 2: College"></span>
+        <span class="stage-dot" title="Stage 3: Young Adult"></span>
+      </div>
+    </div>
+
+    <div id="header-right">
+      <div id="score-display" title="Click to see your full credit score breakdown">
+        <div style="display:flex;align-items:baseline;gap:0.4rem;">
+          <span class="orbitron" id="score-number" style="font-size:1.6rem;font-weight:900;color:#6B7280;">—</span>
+          <span id="score-delta" class="score-delta neutral"></span>
+        </div>
+        <div id="score-tier" style="font-size:0.7rem;color:#6B7280;letter-spacing:0.06em;">No Score Yet</div>
+        <div id="score-label" style="font-size:0.65rem;color:#4B5563;letter-spacing:0.12em;cursor:pointer;">SCORE ▾</div>
+      </div>
+
+      <div id="fico-bar">
+        <div class="fico-segment poor"  title="Payment History (35%)"></div>
+        <div class="fico-segment poor"  title="Amounts Owed (30%)"></div>
+        <div class="fico-segment poor"  title="Length of History (15%)"></div>
+        <div class="fico-segment poor"  title="Credit Mix (10%)"></div>
+        <div class="fico-segment poor"  title="New Credit (10%)"></div>
+      </div>
+
+      <button id="mute-btn" title="Mute sounds" style="background:none;border:none;color:#6B7280;font-size:1.1rem;cursor:pointer;padding:4px;">🔊</button>
+    </div>
+  </header>
+
+  <!-- ── Main Stage Container ────────────────────────────────────────────── -->
+  <main id="stage-container">
+    <!-- Populated by main.js -->
+  </main>
+
+  <!-- ── Score Modal ─────────────────────────────────────────────────────── -->
+  <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+    z-index:1000;align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto;">
+    <div id="score-modal" class="score-modal">
+      <!-- Populated by openScoreModal() -->
+    </div>
+  </div>
+
+  <!-- ── Scripts ─────────────────────────────────────────────────────────── -->
+  <script src="scripts/scoring.js"></script>
+  <script src="scripts/quiz.js"></script>
+  <script src="scripts/scenarios.js"></script>
+  <script src="scripts/tooltip.js"></script>
+  <script src="scripts/audio.js"></script>
+  <script src="scripts/bubbles.js"></script>
+  <script src="scripts/main.js"></script>
+
+</body>
+</html>
