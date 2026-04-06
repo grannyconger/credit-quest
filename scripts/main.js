@@ -176,10 +176,10 @@ function setContent(html) {
 /* ── 0: Character Select ─────────────────────────────────────────────────────── */
 
 const CHARACTER_DATA = {
-  mario: { emoji: '🔴', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
-  luigi: { emoji: '🟢', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
-  peach: { emoji: '🩷', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
-  toad:  { emoji: '🟣', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
+  mario: { emoji: '🔴', primary: '#DC2626', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
+  luigi: { emoji: '🟢', primary: '#16A34A', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
+  peach: { emoji: '🩷', primary: '#EC4899', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
+  toad:  { emoji: '🟣', primary: '#7C3AED', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
 };
 
 function showCharacterSelect() {
@@ -187,10 +187,12 @@ function showCharacterSelect() {
   updateStageDots(0);
 
   const cards = Object.entries(CHARACTER_DATA).map(([id, data]) => `
-    <button class="char-card" data-char="${id}">
-      <div class="char-emoji">${data.emoji}</div>
-      <div class="char-id">${id.charAt(0).toUpperCase() + id.slice(1)}</div>
-      <div class="char-blurb">${data.blurb}</div>
+    <button class="char-card" data-char="${id}" style="--cc-primary:${data.primary}">
+      <div class="char-card-header">
+        <div class="char-card-avatar" style="background:${data.primary}">${data.emoji}</div>
+        <div class="char-card-name">${id.charAt(0).toUpperCase() + id.slice(1)}</div>
+      </div>
+      <div class="char-card-blurb">${data.blurb}</div>
     </button>
   `).join('');
 
@@ -743,7 +745,7 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
       <p style="font-size:0.9rem;color:#E5E7EB;margin:0;">${q.explanation}</p>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
-      <span style="color:#9CA3AF;font-size:0.85rem;">Bonus Points: ${gameState.bonusPoints} / ${(questions.length * (qIndex + 1)) * 5}</span>
+      <span style="color:#9CA3AF;font-size:0.85rem;">Bonus Points: ${gameState.bonusPoints} / 30</span>
       <button class="choice-btn" id="quiz-next-btn">
         ${qIndex + 1 < questions.length ? 'NEXT QUESTION →' : 'CONTINUE →'}
       </button>
