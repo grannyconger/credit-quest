@@ -33,10 +33,17 @@ function getTooltipEl() {
   return _tooltipEl;
 }
 
+/* Abbreviation aliases: maps short data-term values to full dictionary keys */
+const TERM_ALIASES = {
+  'apr':   'annual_percentage_rate_apr',
+  'fico':  'fico_score',
+};
+
 function showTooltip(termEl, dict) {
   // Convert data-term (hyphen-separated) to dict key (underscore)
   const rawKey = termEl.dataset.term || '';
-  const key = rawKey.replace(/-/g, '_');
+  const normalized = rawKey.replace(/-/g, '_').toLowerCase();
+  const key = TERM_ALIASES[normalized] || normalized;
   const entry = dict[key];
   if (!entry) return;
 
@@ -103,7 +110,8 @@ function attachTooltips(container, dict) {
 function trackTerms(container, gameState) {
   const terms = container.querySelectorAll('.term[data-term]');
   terms.forEach(el => {
-    const key = (el.dataset.term || '').replace(/-/g, '_');
+    const normalized = (el.dataset.term || '').replace(/-/g, '_').toLowerCase();
+    const key = TERM_ALIASES[normalized] || normalized;
     if (key) gameState.termsEncountered.add(key);
   });
 }

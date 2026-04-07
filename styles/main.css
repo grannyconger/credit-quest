@@ -18,10 +18,11 @@ body {
   font-family: 'DM Sans', system-ui, sans-serif;
   background-color: var(--bg);
   background-image:
-    repeating-linear-gradient(
-      0deg, rgba(255,255,255,0.03) 0px, transparent 1px, transparent 40px),
-    repeating-linear-gradient(
-      90deg, rgba(255,255,255,0.03) 0px, transparent 1px, transparent 40px);
+    linear-gradient(rgba(10, 10, 20, 0.72), rgba(10, 10, 20, 0.72)),
+    url("../Mario Background Credit Quest.jpg");
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
   display: flex;
@@ -56,6 +57,7 @@ body {
   width: 42px;
   height: 42px;
   border-radius: 50%;
+  overflow: hidden;          /* clips character photo to circle */
   background: var(--char-primary);
   border: 2px solid var(--char-accent);
   display: flex;
@@ -250,6 +252,49 @@ body {
   max-width: 680px;
 }
 
+/* ── Instruction Card (intro sequence between char select and Stage 1) ───────── */
+.instruction-card {
+  background: var(--surface2);
+  color: var(--text);
+  border: 2px solid var(--char-accent);
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+}
+.instruction-card h2 {
+  font-family: 'Boogaloo', 'Orbitron', monospace;
+  font-size: 1.5rem;
+  color: var(--char-accent);
+  margin-bottom: 1rem;
+}
+.instruction-card p { color: var(--text-muted); line-height: 1.75; }
+.instruction-card strong { color: var(--text); }
+.instruction-card .instruction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--char-accent);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--char-accent);
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-bottom: 1.25rem;
+}
+/* Accent callout box inside instruction cards */
+.instruction-card .rule-box {
+  background: rgba(255,255,255,0.04);
+  border-left: 4px solid var(--char-accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
 .card-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -294,11 +339,13 @@ body {
 }
 
 /* ── Vocab Terms ─────────────────────────────────────────────────────────────── */
+/* Use --char-primary (not accent) — accent colors like Luigi lime #BBFF55 and   */
+/* Peach yellow #FDE68A are low contrast on white card backgrounds.              */
 .term {
   font-weight: 700;
-  color: var(--char-accent);
+  color: var(--char-primary);
   cursor: pointer;
-  border-bottom: 2px dotted var(--char-accent);
+  border-bottom: 2px dotted var(--char-primary);
   text-decoration: none;
   transition: opacity 0.15s;
 }
@@ -596,9 +643,10 @@ body {
   margin-bottom: 10px;
 }
 .char-card-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  overflow: hidden;          /* clips the img to the circle */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -606,10 +654,17 @@ body {
   color: #fff;
   flex-shrink: 0;
 }
+.char-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .char-card-name {
   font-family: 'Orbitron', monospace;
   font-size: 1rem;
   font-weight: 700;
+  color: var(--text); /* char-card bg is dark --surface, so needs light text */
 }
 .char-card-blurb {
   font-size: 0.82rem;
@@ -775,3 +830,48 @@ body {
 .outcome-emoji  { font-size: 1.1rem; flex-shrink: 0; }
 .outcome-label  { flex: 1; font-weight: 500; }
 .outcome-status { flex-shrink: 0; }
+
+/* ── Boogaloo title font ─────────────────────────────────────────────────────── */
+.boogaloo { font-family: 'Boogaloo', 'Orbitron', monospace; }
+
+/* ── "Explain More" expandable section ──────────────────────────────────────── */
+.explain-more-btn {
+  background: none;
+  border: 1px solid var(--char-primary);
+  color: var(--char-primary);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-top: 0.75rem;
+}
+.explain-more-btn:hover {
+  background: var(--char-primary);
+  color: #fff;
+}
+.explain-more-panel {
+  display: none;
+  margin-top: 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border-left: 3px solid var(--char-primary);
+  border-radius: 0 8px 8px 0;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.explain-more-panel.open { display: block; }
+.explain-more-panel strong { color: var(--text); }
+.explain-more-panel .factor-chip {
+  display: inline-block;
+  background: var(--char-primary);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}

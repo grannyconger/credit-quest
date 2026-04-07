@@ -236,6 +236,57 @@ const quizBank = [
   }
 ];
 
+/* ── Deep-Dive Explanations (shown via "Explain More" on quiz result) ─────────── */
+/* Keyed by question ID. Explains the underlying FICO principle being tested.    */
+const QUIZ_DEEP_DIVES = {
+  q01: '<strong>The FICO 5-Factor Breakdown:</strong> Payment History (35%) + Amounts Owed (30%) = 65% of your score combined. These two factors dominate because they directly reflect whether you borrow responsibly right now — not in the past, not in theory. The remaining three factors — Length of History (15%), Credit Mix (10%), and New Credit (10%) — matter, but nothing moves a score faster than Payment History and utilization.',
+
+  q02: '<strong>Hard Inquiries and Debt Psychology:</strong> Opening a new credit card when you\'re trying to pay down debt creates two problems: it triggers a Hard Inquiry (New Credit, 10%) and it increases your available temptation. The psychological trap is real — having more available credit makes it easier to keep spending instead of paying down. Reducing spending and increasing income attacks the root cause.',
+
+  q03: '<strong>What\'s Actually on Your Credit Report:</strong> Your Credit Report tracks credit accounts (cards, loans, mortgages), payment history, balances, credit limits, hard inquiries, collections, and public records (bankruptcies, liens). It does NOT track your income, bank account balances, investments, net worth, or employment history — though employers and lenders may ask for those separately.',
+
+  q04: '<strong>Soft vs. Hard Inquiries:</strong> A Soft Inquiry happens when you check your own score, when employers run background checks, or when companies pre-screen you for offers. It has zero effect on your score. A Hard Inquiry only happens when you actively apply for new credit — that triggers a small score dip. Checking your own score is always a Soft Inquiry, so check freely.',
+
+  q05: '<strong>Why Payment History Dominates (35%):</strong> FICO is asking: "Will this person pay us back?" Payment History answers that question directly with evidence. Every on-time payment builds a track record of reliability. There\'s no shortcut — consistent payments over time are the only path to a strong score, which is exactly why starting early matters so much.',
+
+  q06: '<strong>Authorized User Strategy:</strong> Being added as an Authorized User is legitimate and commonly recommended for teens and young adults. You inherit the account\'s history without being legally responsible for the debt. The key: make sure the primary cardholder has a good payment record and low utilization — otherwise you inherit their bad habits too.',
+
+  q07: '<strong>Who Uses Your Credit Score:</strong> Lenders (obviously), landlords, insurance companies (for rates in many states), and employers in finance or government roles all commonly pull credit. Opening a basic savings account doesn\'t require a credit check because no credit is being extended — the bank is just holding your money. Knowing when a Hard Inquiry is coming helps you plan.',
+
+  q08: '<strong>The Two-Factor Combo Play:</strong> Paying in full by the due date simultaneously maximizes both top FICO factors: Payment History (35%) gets a positive mark, and Amounts Owed (30%) benefits because your utilization drops to ~0% before the next reporting cycle. This single habit — pay in full, on time, every month — is the foundation of an exceptional credit score.',
+
+  q09: '<strong>Debt Avalanche vs. Snowball:</strong> The Debt Avalanche (high-rate-first) minimizes total interest paid — it\'s the mathematically optimal strategy. The Debt Snowball (smallest-balance-first) isn\'t as efficient financially but builds psychological momentum through quick wins. Both are legitimate strategies; the best one is whichever you\'ll actually stick to.',
+
+  q10: '<strong>The Three Credit Bureaus:</strong> Equifax, Experian, and TransUnion each independently collect and maintain credit data. Your score can vary between them because not all lenders report to all three, and they may receive updates on different schedules. Your legal right: one free report from each bureau per year at AnnualCreditReport.com.',
+
+  q11: '<strong>The 6-Month Rule:</strong> FICO needs at least one account open for 6 months AND at least one account reported to a bureau within the last 6 months to generate a score. Before those 6 months, you\'re "unscorable" — lenders may deny you not for bad credit, but for no credit. This is the core reason to open an account early and use it consistently.',
+
+  q12: '<strong>Disputing a Credit Report Error:</strong> The Fair Credit Reporting Act (FCRA) gives you the right to dispute inaccurate information. Start with the creditor who reported the error — they can send a correction directly to the bureau. If that doesn\'t work, dispute with the bureau directly. They must investigate within 30 days. Document everything.',
+
+  q13: '<strong>Dispute Evidence Matters:</strong> Credit bureaus receive thousands of disputes. Evidence that proves your case — bank statements, receipts, payment confirmations — dramatically increases your chance of a successful dispute. Errors are more common than people realize: identity mix-ups, data entry mistakes, and old debts that should have fallen off are all real scenarios.',
+
+  q14: '<strong>The Hard Inquiry Cascade:</strong> When you apply for multiple credit cards quickly, lenders see a pattern: someone who suddenly needs a lot of new credit may be in financial distress. Each Hard Inquiry stays on your report for 2 years (affects your score for about 12 months). Exception: rate shopping for a mortgage, auto loan, or student loan within a 14–45 day window is treated as a single inquiry by most scoring models.',
+
+  q15: '<strong>Snowball vs. Avalanche — The Full Picture:</strong> Snowball (smallest balance first) gives fast wins that keep you motivated. Avalanche (highest rate first) saves the most money over time. Research suggests people who use the Snowball method are more likely to actually pay off their debt — behavioral economics matters. Pick the method you\'ll commit to.',
+
+  q16: '<strong>Federal Student Loan Default Consequences:</strong> Unlike most debt, the federal government can collect federal student loan debt without suing you first. Wage garnishment, tax refund seizure, and Social Security offset are all available enforcement tools. Default also triggers immediate reporting to credit bureaus with the full balance showing as past due. Income-driven repayment plans exist specifically to prevent default.',
+
+  q17: '<strong>The Cosigner Arrangement:</strong> A cosigner doesn\'t just vouch for you — they\'re equally legally responsible for the debt. If you miss payments, it damages their credit too. For the borrower, the cosigner\'s stronger credit history can unlock approval and better rates. For the cosigner, it\'s a risk. This is why cosigning is often described as "guaranteeing the debt with your own credit score."',
+
+  q18: '<strong>Payment Priority — All Debt Counts:</strong> It doesn\'t matter which account you skip — any missed payment damages your Payment History (35%). The instinct to prioritize the biggest debt is understandable, but credit bureaus just see a missed payment, not your reasoning. When cash is tight, negotiate with lenders for lower payments or hardship programs rather than simply stopping payment.',
+
+  q19: '<strong>Length of Credit History (15%):</strong> This factor rewards the age of your oldest account and your average account age. You can\'t rush it — it grows automatically as long as you keep accounts open. The practical implication: don\'t close old credit cards, even if you rarely use them. A 10-year-old card with a $0 balance is quietly helping your score every month.',
+
+  q20: '<strong>Your Legal Right to Free Credit Reports:</strong> The Fair and Accurate Credit Transactions Act (FACTA) mandates one free credit report per bureau per year. AnnualCreditReport.com is the only federally authorized source. Note: this gives you your REPORT (the full data), not your SCORE. Scores are calculated from the report but are sold separately (or given free by many banks and apps).',
+
+  q21: '<strong>The Real-World Breadth of Credit Scores:</strong> Your credit score isn\'t just for loans. It affects apartment applications, car insurance premiums (in most states), utility deposits, cell phone contracts, and some job applications. A low score doesn\'t just cost you higher interest — it can mean paying more for everything from rent to insurance for years.',
+};
+
+/* Merge deepDive fields into quizBank at load time */
+quizBank.forEach(q => {
+  if (QUIZ_DEEP_DIVES[q.id]) q.deepDive = QUIZ_DEEP_DIVES[q.id];
+});
+
 /* ── Fisher-Yates Shuffle ─────────────────────────────────────────────────────── */
 function fisherYates(arr) {
   const a = arr.slice();

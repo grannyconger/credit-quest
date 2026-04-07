@@ -170,16 +170,110 @@ function setContent(html) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
+/* EXPLAIN MORE — Dynamic FICO explanation generator                              */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+function generateDeepExplanation(choice) {
+  const effects = choice.effects || {};
+  const lines = [];
+
+  if (effects.hasAnyCredit) {
+    lines.push('<strong>🏁 Credit History Started</strong> — This account officially opened your credit file with the bureaus. FICO requires at least 6 months of history before it can generate a score. The clock is now running — every on-time payment from here builds your record.');
+  }
+
+  if (effects.paymentHistory) {
+    const ph = effects.paymentHistory;
+    if (ph.latePayments30) {
+      lines.push('<strong>⚠️ 30-Day Late Payment (−35 pts)</strong> — Payment History is 35% of your FICO Score — the single biggest factor. A 30-day late stays on your Credit Report for 7 years. The damage fades over time, but only consistent on-time payments rebuild it.');
+      lines.push('Recovery tip: Set up autopay for at least the minimum so this never happens again. One late payment can drop a good score by 50–100+ points overnight.');
+    }
+    if (ph.latePayments60) {
+      lines.push('<strong>🚨 60-Day Late Payment (−60 pts)</strong> — More damaging than a 30-day late because it signals you ignored the first warning. Lenders see this as a significant reliability problem. Recovery requires 12–24 months of clean payment history to meaningfully offset it.');
+    }
+    if (ph.defaults) {
+      lines.push('<strong>💥 Default / Charge-Off (−90 pts)</strong> — The lender gave up trying to collect. This is one of the worst marks on a credit report and stays for 7 years. It can drop a good score by 100–150 points and will cause loan denials, high rates, and deposit requirements for years.');
+    }
+    if (ph.collections) {
+      lines.push('<strong>📉 Collections Account (−75 pts)</strong> — A third-party collector now owns your debt and reports it separately. Collections accounts are heavily penalized by FICO even after paid — many newer scoring models ignore paid collections, but older ones (still widely used) still count them.');
+    }
+    if (ph.removeCollection) {
+      lines.push('<strong>✅ Collection Removed</strong> — Successfully negotiating a "pay-for-delete" (where the collector removes the entry in exchange for payment) is one of the few ways to erase a collections mark before its 7-year expiration.');
+    }
+    if (ph.delta > 0) {
+      lines.push('<strong>✅ On-Time Payment Recorded</strong> — Payment History (35%) rewards consistency above all else. Each payment reinforces your reliability. A long streak of on-time payments is the single most powerful thing you can do to build and protect your score.');
+    }
+  }
+
+  if (effects.amountsOwed) {
+    const ao = effects.amountsOwed;
+    if (ao.limitDelta > 0 && ao.balanceDelta > 0) {
+      const util = ao.limitDelta > 0 ? Math.round((ao.balanceDelta / ao.limitDelta) * 100) : 0;
+      if (util >= 75) {
+        lines.push(`<strong>💳 Utilization at ~${util}% (Amounts Owed, 30%)</strong> — This is in the danger zone. FICO heavily penalizes utilization over 30%, and above 75% it's a major red flag. Even if you plan to pay it off next month, the reported balance was already sent to the bureaus at your statement date.`);
+      } else if (util >= 30) {
+        lines.push(`<strong>💳 Utilization at ~${util}% (Amounts Owed, 30%)</strong> — You're above the 30% sweet spot. Amounts Owed is worth 30% of your score — keeping balances below 30% of your total limit keeps this factor healthy.`);
+      } else if (util > 0) {
+        lines.push(`<strong>💳 Utilization at ~${util}% (Amounts Owed, 30%)</strong> — Low utilization. FICO rewards keeping balances well below your limit. Under 10% is ideal; under 30% is solid.`);
+      }
+    }
+    if (ao.balanceDelta < 0 || ao.balanceClear) {
+      lines.push('<strong>📉 Balance Paid Down (Amounts Owed, 30%)</strong> — Reducing your balance directly improves your utilization ratio. The lower your balance relative to your limit, the better your Amounts Owed factor. Paying to zero is the best outcome — 0% utilization is ideal.');
+    }
+    if (ao.limitClose) {
+      lines.push('<strong>⚠️ Credit Limit Reduced (Closing Account)</strong> — Closing a card removes its limit from your total available credit. If you still carry balances elsewhere, this spikes your overall utilization ratio — sometimes dramatically. This is why financial advisors say "never close your oldest card."');
+    }
+  }
+
+  if (effects.lengthHistory) {
+    const lh = effects.lengthHistory;
+    if (lh.delta > 0) {
+      lines.push('<strong>📅 Length of Credit History (15%)</strong> — Time in the game. The older your oldest account, the more this factor works in your favor. You can\'t rush it — every month an account stays open adds to your history. This is a slow burn that rewards patience and starting early.');
+    }
+    if (lh.delta < 0) {
+      lines.push('<strong>📅 Credit Age Shortened (Length of History, 15%)</strong> — Closing your oldest account shortens your average credit age. Lenders use account age to measure long-term reliability. Once closed, the history eventually falls off your report entirely (usually after 10 years).');
+    }
+  }
+
+  if (effects.creditMix) {
+    const cm = effects.creditMix;
+    if (cm.hasInstallmentLoan) {
+      lines.push('<strong>🔄 Installment Loan Added (Credit Mix, 10%)</strong> — Credit Mix rewards having both revolving credit (cards) and installment loans (car, student, personal). You just added a new type. This factor doesn\'t warrant taking on debt you don\'t need, but it\'s a nice bonus when you have a legitimate reason.');
+    }
+    if (cm.hasRevolvingCredit) {
+      lines.push('<strong>🔄 Revolving Credit Added (Credit Mix, 10%)</strong> — Having a credit card (revolving) alongside loans (installment) improves your mix. Credit Mix is only 10% of your score, but it adds up over a full game.');
+    }
+    if (cm.hasMortgage) {
+      lines.push('<strong>🏡 Mortgage Added (Credit Mix, 10%)</strong> — A mortgage is the gold standard of credit mix. It maxes out your Credit Mix factor and your mortgage payments become your most impactful Payment History opportunity — the biggest loan most people ever carry.');
+    }
+  }
+
+  if (effects.newCredit) {
+    const nc = effects.newCredit;
+    if (nc.hardInquiries >= 3) {
+      lines.push(`<strong>🔍 ${nc.hardInquiries} Hard Inquiries (New Credit, 10%)</strong> — Multiple applications in a short window signal financial stress to lenders. Each Hard Inquiry stays on your report for 2 years (affects your score for about 12 months). The damage isn't catastrophic from one, but stacking them compounds fast.`);
+    } else if (nc.hardInquiries >= 1) {
+      lines.push(`<strong>🔍 Hard Inquiry (New Credit, 10%)</strong> — Applying for credit triggers a Hard Inquiry. A single inquiry costs only a few points and fades after 12 months. The key is not stacking multiple applications in a short window — that's when it starts hurting meaningfully.`);
+    }
+  }
+
+  if (Object.keys(effects).length === 0 || lines.length === 0) {
+    lines.push('<strong>ℹ️ No Direct Score Impact</strong> — Not every financial decision moves your credit score. Some choices build safety nets that protect your score indirectly — like an Emergency Fund that prevents you from missing a payment during a financial shock.');
+  }
+
+  return lines.join('<br><br>');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 /* SCREENS                                                                        */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── 0: Character Select ─────────────────────────────────────────────────────── */
 
 const CHARACTER_DATA = {
-  mario: { emoji: '🔴', primary: '#DC2626', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
-  luigi: { emoji: '🟢', primary: '#16A34A', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
-  peach: { emoji: '🩷', primary: '#EC4899', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
-  toad:  { emoji: '🟣', primary: '#7C3AED', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
+  mario: { emoji: '🔴', img: './mario.jpg', primary: '#DC2626', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
+  luigi: { emoji: '🟢', img: './luigi.jpg', primary: '#16A34A', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
+  peach: { emoji: '🩷', img: './peach.jpg', primary: '#EC4899', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
+  toad:  { emoji: '🟣', img: './toad.jpg',  primary: '#7C3AED', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
 };
 
 function showCharacterSelect() {
@@ -189,7 +283,10 @@ function showCharacterSelect() {
   const cards = Object.entries(CHARACTER_DATA).map(([id, data]) => `
     <button class="char-card" data-char="${id}" style="--cc-primary:${data.primary}">
       <div class="char-card-header">
-        <div class="char-card-avatar" style="background:${data.primary}">${data.emoji}</div>
+        <div class="char-card-avatar" style="background:${data.primary}">
+            <img src="${data.img}" alt="${id}"
+              onerror="this.style.display='none';this.parentNode.textContent='${data.emoji}'">
+          </div>
         <div class="char-card-name">${id.charAt(0).toUpperCase() + id.slice(1)}</div>
       </div>
       <div class="char-card-blurb">${data.blurb}</div>
@@ -198,8 +295,8 @@ function showCharacterSelect() {
 
   setContent(`
     <div class="intro-card card" style="max-width:600px;margin:0 auto;">
-      <h1 class="orbitron" style="font-size:1.6rem;margin-bottom:0.25rem;">CREDIT QUEST</h1>
-      <p style="color:var(--char-accent);margin-bottom:1.5rem;font-size:0.9rem;">A life-sim credit score adventure</p>
+      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:var(--char-accent);">Credit Quest</h1>
+      <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;margin-top:0.1rem;">A life-sim credit score adventure</p>
 
       <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Your Name</label>
       <input id="name-input" type="text" placeholder="Enter your name…"
@@ -261,7 +358,10 @@ function startGame(name, character) {
   // Update persistent header
   el.playerNameEl.textContent = name;
   el.charName.textContent     = character.charAt(0).toUpperCase() + character.slice(1);
-  el.charAvatar.textContent   = CHARACTER_DATA[character].emoji;
+  const _cd = CHARACTER_DATA[character];
+  el.charAvatar.innerHTML = `<img src="${_cd.img}" alt="${character}"
+    style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;"
+    onerror="this.parentNode.textContent='${_cd.emoji}'">`;
 
   updateScoreDisplay(null, null);
 
@@ -275,7 +375,7 @@ function startGame(name, character) {
 
 const INTRO_CARDS = [
   (name) => `
-    <h2 class="orbitron" style="color:var(--char-accent);margin-bottom:1rem;">Welcome, ${name}.</h2>
+    <h2>Welcome, ${name}.</h2>
     <p>You've just turned 16 — and somewhere out there, three organizations called
     <span class="term" data-term="credit-bureau">Credit Bureaus</span> have just started a file on you.
     Everything you do with borrowed money goes into that file. That file becomes your
@@ -283,22 +383,22 @@ const INTRO_CARDS = [
     your <span class="term" data-term="credit-score">Credit Score</span>.</p>
   `,
   () => `
-    <h2 class="orbitron" style="color:var(--char-accent);margin-bottom:1rem;">Why It Matters</h2>
+    <h2>Why It Matters</h2>
     <p>Your <span class="term" data-term="credit-score">Credit Score</span> is a number between 300 and 850.
     Landlords, banks, car dealers, and even some employers use it to decide how much they trust you with money.
     A high score opens doors. A low score — or no score at all — closes them.</p>
   `,
   () => `
-    <h2 class="orbitron" style="color:var(--char-accent);margin-bottom:1rem;">Your Starting Point</h2>
+    <h2>Your Starting Point</h2>
     <p>Right now? You have a <span class="term" data-term="thin-file">Thin File</span>. No
     <span class="term" data-term="credit-history">Credit History</span> at all. Which means you have no score.
     Over the next few years of this simulation, you'll make real decisions that either build that file
     — or leave it empty. Either way, there are consequences.</p>
   `,
   () => `
-    <h2 class="orbitron" style="color:var(--char-accent);margin-bottom:1rem;">The #1 Rule</h2>
-    <div class="thin-file-warning" style="padding:1rem 1.25rem;border-radius:10px;margin-bottom:1rem;">
-      <p style="margin:0;font-weight:700;font-size:1.05rem;">⚡ THE #1 RULE OF THIS GAME</p>
+    <h2>The #1 Rule</h2>
+    <div class="rule-box">
+      <p style="margin:0;font-weight:700;font-size:1.05rem;color:var(--char-accent);">⚡ THE #1 RULE OF THIS GAME</p>
     </div>
     <p><span class="term" data-term="payment-history">Payment History</span> is <strong>35%</strong> of your
     <span class="term" data-term="fico-score">FICO Score</span> — the biggest single factor. The #2 rule:
@@ -319,10 +419,8 @@ function showIntro(cardIndex) {
   const cardHTML = INTRO_CARDS[cardIndex](gameState.playerName);
 
   setContent(`
-    <div class="intro-card card" style="max-width:600px;margin:0 auto;">
-      <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.75rem;letter-spacing:0.1em;">
-        INTRO ${cardIndex + 1} / ${INTRO_CARDS.length}
-      </div>
+    <div class="instruction-card" style="max-width:600px;margin:0 auto;">
+      <div class="instruction-badge">📋 How to Play &nbsp;·&nbsp; ${cardIndex + 1} / ${INTRO_CARDS.length}</div>
       ${cardHTML}
       <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
         <button class="choice-btn" id="intro-next-btn">
@@ -626,9 +724,11 @@ function showConsequenceResult(scenario, choice, scoreData) {
     ` : ''}
     ${factorHighlights ? `<div class="factor-highlights" style="margin-bottom:1rem;">${factorHighlights}</div>` : ''}
     ${consequenceBubble ? `<div class="card-bubble" style="margin-bottom:1rem;">${consequenceBubble}</div>` : ''}
-    <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+      ${scoreData ? '<button class="explain-more-btn" id="explain-btn">🔍 Explain More</button>' : '<span></span>'}
       <button class="choice-btn" id="next-btn">NEXT →</button>
     </div>
+    ${scoreData ? '<div class="explain-more-panel" id="explain-panel"></div>' : ''}
   `;
 
   // Append below existing card (so player can see choice context)
@@ -656,6 +756,19 @@ function showConsequenceResult(scenario, choice, scoreData) {
       });
     });
   }, 200);
+
+  // Explain More toggle (only present for player-choice consequences, not consequence-events)
+  const explainBtn   = conseqCard.querySelector('#explain-btn');
+  const explainPanel = conseqCard.querySelector('#explain-panel');
+  if (explainBtn && explainPanel) explainBtn.addEventListener('click', () => {
+    sounds.click();
+    const open = explainPanel.classList.toggle('open');
+    explainBtn.textContent = open ? '🔍 Show Less' : '🔍 Explain More';
+    if (open && !explainPanel.innerHTML) {
+      explainPanel.innerHTML = generateDeepExplanation(choice);
+    }
+    if (open) explainPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });  // end if explainBtn
 
   conseqCard.querySelector('#next-btn').addEventListener('click', () => {
     sounds.click();
@@ -744,6 +857,12 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
       </div>
       <p style="font-size:0.9rem;color:#E5E7EB;margin:0;">${q.explanation}</p>
     </div>
+    ${q.deepDive ? `
+    <div style="margin-top:0.5rem;">
+      <button class="explain-more-btn" id="quiz-explain-btn">🔍 Explain More</button>
+      <div class="explain-more-panel" id="quiz-explain-panel">${q.deepDive}</div>
+    </div>
+    ` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
       <span style="color:#9CA3AF;font-size:0.85rem;">Bonus Points: ${gameState.bonusPoints} / 30</span>
       <button class="choice-btn" id="quiz-next-btn">
@@ -751,6 +870,16 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
       </button>
     </div>
   `;
+
+  const quizExplainBtn = resultEl.querySelector('#quiz-explain-btn');
+  if (quizExplainBtn) {
+    const panel = resultEl.querySelector('#quiz-explain-panel');
+    quizExplainBtn.addEventListener('click', () => {
+      sounds.click();
+      const open = panel.classList.toggle('open');
+      quizExplainBtn.textContent = open ? '🔍 Show Less' : '🔍 Explain More';
+    });
+  }
 
   el.container.querySelector('#quiz-next-btn').addEventListener('click', () => {
     sounds.click();
@@ -1099,7 +1228,7 @@ function resetGame() {
   el.body.className = '';
   el.playerNameEl.textContent = '';
   el.charName.textContent     = '';
-  el.charAvatar.textContent   = '⭐';
+  el.charAvatar.innerHTML = '⭐';
   updateScoreDisplay(null, null);
   updateStageDots(0);
 

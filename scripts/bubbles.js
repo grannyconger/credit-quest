@@ -124,6 +124,8 @@ function showBubble(text, duration = 4000) {
   const bubble = document.createElement('div');
   bubble.className = 'character-bubble';
   bubble.textContent = text;
+  // Apply appear animation inline (the element is positioned right of the avatar)
+  bubble.style.animation = 'bubbleIn 220ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
   avatarEl.appendChild(bubble);
   _currentBubble = bubble;
 
@@ -131,11 +133,11 @@ function showBubble(text, duration = 4000) {
 
   _bubbleTimer = setTimeout(() => {
     if (_currentBubble === bubble) {
-      bubble.style.animation = 'bubbleOut 200ms ease-in forwards';
+      bubble.style.animation = 'bubbleOut 180ms ease-in forwards';
       setTimeout(() => {
         bubble.remove();
         if (_currentBubble === bubble) _currentBubble = null;
-      }, 200);
+      }, 180);
     }
   }, duration);
 }
