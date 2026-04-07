@@ -301,7 +301,7 @@ function showCharacterSelect() {
 
   setContent(`
     <div class="intro-card card char-select-fade-in" style="max-width:860px;margin:0 auto;opacity:0;">
-      <h1 class="boogaloo credit-quest-title" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;">Credit Quest</h1>
+      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:#F9FAFB;">Credit Quest</h1>
       <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;margin-top:0.1rem;">A life-sim credit score adventure</p>
 
       <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Your Name</label>
@@ -329,20 +329,18 @@ function showCharacterSelect() {
     introCard.style.transition = 'opacity 400ms ease';
   }, 2000);
 
-  // onstart sound: play immediately (may be blocked by autoplay policy)
-  // and on first interaction if blocked
+  // onstart sound: play on first user gesture (autoplay policy requires this)
   let _onstartPlayed = false;
-  function _tryOnstart() {
+  async function _tryOnstart() {
     if (_onstartPlayed) return;
     _onstartPlayed = true;
-    initAudio();
-    sounds.onstart();
     document.removeEventListener('click',   _tryOnstart);
     document.removeEventListener('keydown', _tryOnstart);
+    await initAudio();
+    sounds.onstart();
   }
-  _tryOnstart(); // attempt immediately
-  document.addEventListener('click',   _tryOnstart, { once: true });
-  document.addEventListener('keydown', _tryOnstart, { once: true });
+  document.addEventListener('click',   _tryOnstart);
+  document.addEventListener('keydown', _tryOnstart);
 
   let selectedChar = '';
 
@@ -351,14 +349,19 @@ function showCharacterSelect() {
       el.container.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedChar = card.dataset.char;
-      initAudio();
-      sounds.introChar(card.dataset.char);
+      initAudio().then(() => sounds.introChar(card.dataset.char));
       checkReady();
     });
   });
 
   const nameInput = el.container.querySelector('#name-input');
-  nameInput.addEventListener('focus', () => { initAudio(); sounds.start(); });
+  let _startPlayed = false;
+  nameInput.addEventListener('focus', async () => {
+    if (_startPlayed) return;
+    _startPlayed = true;
+    await initAudio();
+    sounds.start();
+  });
   nameInput.addEventListener('input', () => { checkReady(); });
 
   function checkReady() {
@@ -541,6 +544,11 @@ const STAGE_LABELS = {
 };
 
 function showStageIntroCard(stageNum) {
+  // Play character intro sound at the start of stage 2 and 3
+  if (stageNum >= 2) {
+    initAudio().then(() => sounds.introChar(gameState.character));
+  }
+
   const info = STAGE_LABELS[stageNum];
   const score = calculateFICOScore(gameState.credit);
   const tier  = getScoreTier(score);
@@ -550,8 +558,10 @@ function showStageIntroCard(stageNum) {
       <div class="orbitron" style="font-size:0.8rem;color:#6B7280;letter-spacing:0.12em;margin-bottom:0.5rem;">
         ${info.title.toUpperCase()}
       </div>
-      <h2 class="orbitron" style="color:var(--char-accent);font-size:1.4rem;margin-bottom:0.25rem;">${info.title}</h2>
-      <p style="color:#9CA3AF;margin-bottom:1.5rem;">${info.sub}</p>
+      <h2 class="orbitron" style="color:var(--char-accent);font-size:1.4rem;margin-bottom:0.5rem;">${info.title}</h2>
+      <p style="color:#9CA3AF;margin-bottom:1.25rem;">${info.sub}</p>
+      <img class="stage-intro-img" src="./images/stage${stageNum}.png"
+        onerror="this.style.display='none'" alt="${info.title}">
       <p>You're about to face <strong>4 financial decisions</strong> drawn from a pool of 10.
       Every choice you make affects your
       <span class="term" data-term="credit-score">Credit Score</span>.</p>
@@ -693,7 +703,9 @@ function recordChoice(scenario, choiceIndex) {
 
   // Log the decision
   gameState.decisionsLog.push({
-    scenarioId:  scenario.id,
+    scenarioId:    scenario.id,
+    scenarioTitle: scenario.title,
+    stage:         gameState.currentStage,
     choiceIndex,
     choiceLabel: choice.label,
     oldScore,
@@ -705,6 +717,7 @@ function recordChoice(scenario, choiceIndex) {
   const delta = (newScore || 0) - (oldScore || 0);
   if (delta > 0)      sounds.goodChoice();
   else if (delta < 0) sounds.badChoice();
+  else                sounds.bubblePop();
 
   // Special bubble triggers
   if (choice.effects?.newCredit?.hardInquiries >= 2) {
@@ -851,7 +864,7 @@ function showQuizCard(questions, qIndex, completedStage) {
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
         <span style="font-size:1.5rem;">🧠</span>
-        <h2 style="font-size:1.05rem;font-weight:700;color:var(--char-accent);">Quiz Time!</h2>
+        <h2 style="font-size:1.05rem;font-weight:700;color:var(--char-accent);">Extra Credit Points!</h2>
       </div>
       <p style="font-weight:600;line-height:1.6;margin-bottom:1.25rem;">${q.question}</p>
       <div id="quiz-choices">${choicesHTML}</div>
@@ -901,7 +914,7 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
     </div>
     ` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
-      <span style="color:#9CA3AF;font-size:0.85rem;">Bonus Points: ${gameState.bonusPoints} / 30</span>
+      <span style="color:#9CA3AF;font-size:0.85rem;line-height:1.6;">Bonus Points:<br><strong style="color:#E5E7EB;">${gameState.bonusPoints} / 30</strong></span>
       <button class="choice-btn" id="quiz-next-btn">
         ${qIndex + 1 < questions.length ? 'NEXT QUESTION →' : 'CONTINUE →'}
       </button>
@@ -1092,28 +1105,6 @@ function showReportCard() {
 
   if (flags.perfectPaymentHistory) sounds.stageCompletePerfect();
 
-  // Real-world outcome matrix
-  const outcomes = [
-    { emoji: '🏠', label: 'Apartment — no deposit',       minScore: 720 },
-    { emoji: '🏠', label: 'Apartment — small deposit',    minScore: 670 },
-    { emoji: '🚗', label: 'Car Loan — best rate (4.5%)',   minScore: 750 },
-    { emoji: '🚗', label: 'Car Loan — decent rate (9%)',   minScore: 680 },
-    { emoji: '💼', label: 'Finance Job Application',       minScore: 670 },
-    { emoji: '🏦', label: 'Personal Loan approved',        minScore: 640 },
-    { emoji: '🏡', label: 'Mortgage — competitive rate',   minScore: 760 },
-  ];
-
-  const outcomeGrid = outcomes.map(o => {
-    const unlocked = score && score >= o.minScore;
-    return `
-      <div class="outcome-item ${unlocked ? 'unlocked' : 'locked'}">
-        <span class="outcome-emoji">${o.emoji}</span>
-        <span class="outcome-label">${o.label}</span>
-        <span class="outcome-status">${unlocked ? '✅' : '🔒'}</span>
-      </div>
-    `;
-  }).join('');
-
   // Factor bars
   const factorBars = FACTOR_META.map(m => {
     const pct = subs[m.key] || 0;
@@ -1130,12 +1121,51 @@ function showReportCard() {
     `;
   }).join('');
 
-  // Journey narrative from decisionsLog
-  const journey = gameState.decisionsLog.map(d => {
-    const sign = d.scoreEffect > 0 ? '+' : '';
-    const eff = d.scoreEffect !== null ? ` (${sign}${d.scoreEffect} pts)` : '';
-    return `<li><strong>${d.scenarioId}</strong>: ${d.choiceLabel}${eff}</li>`;
-  }).join('');
+  // Journey narrative from decisionsLog — grouped by life stage
+  const STAGE_NAMES = { 1: 'High School (Ages 16–18)', 2: 'College Age (Ages 18–22)', 3: 'Young Adult (Ages 22–25)' };
+  const journeyByStage = {};
+  gameState.decisionsLog.forEach(d => {
+    const s = d.stage || 1;
+    if (!journeyByStage[s]) journeyByStage[s] = [];
+    journeyByStage[s].push(d);
+  });
+  const journeyHTML = Object.keys(journeyByStage).sort().map(s => {
+    const items = journeyByStage[s].map(d => {
+      const sign = d.scoreEffect > 0 ? '+' : '';
+      const effColor = d.scoreEffect > 0 ? '#4ADE80' : d.scoreEffect < 0 ? '#F87171' : '#9CA3AF';
+      const eff = d.scoreEffect !== null
+        ? `<span style="color:${effColor};font-weight:700;"> ${sign}${d.scoreEffect} pts</span>`
+        : '';
+      return `<li style="margin-bottom:0.4rem;color:#E5E7EB;">
+        <span style="color:#F9FAFB;font-weight:600;">${d.scenarioTitle || d.scenarioId}</span>
+        <span style="color:#9CA3AF;"> — ${d.choiceLabel}</span>${eff}
+      </li>`;
+    }).join('');
+    return `
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;color:#6B7280;font-weight:700;margin-bottom:0.4rem;text-transform:uppercase;">
+          ${STAGE_NAMES[s] || `Stage ${s}`}
+        </div>
+        <ul style="padding-left:1.25rem;margin:0;line-height:1.8;font-size:0.875rem;">${items}</ul>
+      </div>`;
+  }).join('') || '<p style="color:#9CA3AF;">No decisions recorded.</p>';
+
+  // FICO factors plain-language card
+  const ficoFactorsHTML = [
+    { icon: '💳', pct: '35%', name: 'Payment History',     plain: 'Do you pay your bills on time? Late payments hurt — a lot. This is the biggest factor.' },
+    { icon: '📊', pct: '30%', name: 'Amounts Owed',        plain: 'How much of your available credit are you using? Keep your card balances below 30% of your limit.' },
+    { icon: '📅', pct: '15%', name: 'Length of History',   plain: 'How long have you had credit? Older accounts help. Don\'t close your oldest card.' },
+    { icon: '🔄', pct: '10%', name: 'Credit Mix',          plain: 'Do you have both credit cards and loans? A healthy mix of types shows you can manage different debt.' },
+    { icon: '🔍', pct: '10%', name: 'New Credit',          plain: 'Have you applied for a lot of new credit recently? Each application leaves a hard inquiry on your report.' },
+  ].map(f => `
+    <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.9rem;padding-bottom:0.9rem;border-bottom:1px solid #1F2937;">
+      <span style="font-size:1.4rem;flex-shrink:0;">${f.icon}</span>
+      <div>
+        <div style="font-weight:700;color:#F9FAFB;font-size:0.9rem;">${f.name} <span style="color:var(--char-accent);font-size:0.8rem;">(${f.pct})</span></div>
+        <div style="color:#D1D5DB;font-size:0.85rem;line-height:1.5;margin-top:0.2rem;">${f.plain}</div>
+      </div>
+    </div>
+  `).join('');
 
   setContent(`
     <div style="max-width:680px;margin:0 auto;">
@@ -1167,31 +1197,7 @@ function showReportCard() {
         </div>
       </div>
 
-      <!-- FICO Factor Breakdown -->
-      <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
-          YOUR FICO FACTOR BREAKDOWN
-        </div>
-        ${factorBars}
-      </div>
-
-      <!-- Real-World Outcomes -->
-      <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
-          WHAT YOUR SCORE UNLOCKS IN THE REAL WORLD
-        </div>
-        <div class="outcome-grid">${outcomeGrid}</div>
-      </div>
-
-      <!-- Journey -->
-      <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
-          YOUR JOURNEY
-        </div>
-        <ul style="padding-left:1.25rem;line-height:2;font-size:0.9rem;color:#D1D5DB;">${journey || '<li>No decisions recorded.</li>'}</ul>
-      </div>
-
-      <!-- Vocab Review -->
+      <!-- Vocab Review (slot 2) -->
       <div class="card" style="margin-bottom:1rem;" id="vocab-section">
         <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
           VOCABULARY YOU ENCOUNTERED
@@ -1200,6 +1206,30 @@ function showReportCard() {
           SHOW TERMS (${gameState.termsEncountered.size})
         </button>
         <div id="vocab-list" style="display:none;"></div>
+      </div>
+
+      <!-- What is a credit score? (replaces outcomes card) -->
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+          THE 5 FACTORS THAT BUILD YOUR SCORE
+        </div>
+        ${ficoFactorsHTML}
+      </div>
+
+      <!-- FICO Factor Breakdown -->
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+          YOUR FICO FACTOR BREAKDOWN
+        </div>
+        ${factorBars}
+      </div>
+
+      <!-- Journey -->
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+          YOUR JOURNEY
+        </div>
+        ${journeyHTML}
       </div>
 
       <!-- Play Again -->
@@ -1211,6 +1241,13 @@ function showReportCard() {
 
     </div>
   `);
+
+  window.scrollTo(0, 0);
+
+  // Stagger the report card sections
+  el.container.querySelectorAll('.card').forEach((card, i) => {
+    card.style.animationDelay = `${i * 80}ms`;
+  });
 
   // Vocab toggle
   const vocabBtn  = el.container.querySelector('#vocab-toggle-btn');

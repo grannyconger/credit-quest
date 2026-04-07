@@ -115,9 +115,9 @@ function setMuted(val) { _muted = val; }
 function isMuted()     { return _muted; }
 
 /* Call on first user gesture to unlock AudioContext and decode all WAVs */
-function initAudio() {
+async function initAudio() {
   try {
     getCtx();
-    decodeAllBuffers();
+    await decodeAllBuffers();
   } catch(e) {}
 }
