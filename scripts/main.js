@@ -270,10 +270,10 @@ function generateDeepExplanation(choice) {
 /* ── 0: Character Select ─────────────────────────────────────────────────────── */
 
 const CHARACTER_DATA = {
-  mario: { emoji: '🔴', img: './mario.jpg', primary: '#DC2626', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
-  luigi: { emoji: '🟢', img: './luigi.jpg', primary: '#16A34A', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
-  peach: { emoji: '🩷', img: './peach.jpg', primary: '#EC4899', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
-  toad:  { emoji: '🟣', img: './toad.jpg',  primary: '#7C3AED', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
+  mario: { emoji: '🔴', img: './images/mario.jpg', primary: '#DC2626', blurb: 'The ambitious go-getter. Ready to level up — financially.' },
+  luigi: { emoji: '🟢', img: './images/luigi.jpg', primary: '#16A34A', blurb: 'Cautious, methodical, perpetually underestimated. Let\'s change that.' },
+  peach: { emoji: '🩷', img: './images/peach.jpg', primary: '#EC4899', blurb: 'Royalty doesn\'t wait for good credit. Royalty builds it.' },
+  toad:  { emoji: '🟣', img: './images/toad.jpg',  primary: '#7C3AED', blurb: 'Chaotic energy. Questionable decisions. Somehow still thriving.' },
 };
 
 function showCharacterSelect() {
@@ -293,9 +293,15 @@ function showCharacterSelect() {
     </button>
   `).join('');
 
+  // Title splash overlay
+  const splash = document.createElement('div');
+  splash.id = 'title-splash';
+  splash.innerHTML = `<span class="title-splash-word boogaloo">Credit Quest</span>`;
+  document.body.appendChild(splash);
+
   setContent(`
-    <div class="intro-card card" style="max-width:600px;margin:0 auto;">
-      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:var(--char-accent);">Credit Quest</h1>
+    <div class="intro-card card char-select-fade-in" style="max-width:860px;margin:0 auto;opacity:0;">
+      <h1 class="boogaloo credit-quest-title" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;">Credit Quest</h1>
       <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;margin-top:0.1rem;">A life-sim credit score adventure</p>
 
       <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Your Name</label>
@@ -314,6 +320,30 @@ function showCharacterSelect() {
     </div>
   `);
 
+  const introCard = el.container.querySelector('.intro-card');
+
+  // Fade in the char-select card after splash animation (~2s)
+  setTimeout(() => {
+    if (splash.parentNode) splash.parentNode.removeChild(splash);
+    introCard.style.opacity = '1';
+    introCard.style.transition = 'opacity 400ms ease';
+  }, 2000);
+
+  // onstart sound: play immediately (may be blocked by autoplay policy)
+  // and on first interaction if blocked
+  let _onstartPlayed = false;
+  function _tryOnstart() {
+    if (_onstartPlayed) return;
+    _onstartPlayed = true;
+    initAudio();
+    sounds.onstart();
+    document.removeEventListener('click',   _tryOnstart);
+    document.removeEventListener('keydown', _tryOnstart);
+  }
+  _tryOnstart(); // attempt immediately
+  document.addEventListener('click',   _tryOnstart, { once: true });
+  document.addEventListener('keydown', _tryOnstart, { once: true });
+
   let selectedChar = '';
 
   el.container.querySelectorAll('.char-card').forEach(card => {
@@ -321,12 +351,15 @@ function showCharacterSelect() {
       el.container.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedChar = card.dataset.char;
+      initAudio();
+      sounds.introChar(card.dataset.char);
       checkReady();
     });
   });
 
   const nameInput = el.container.querySelector('#name-input');
-  nameInput.addEventListener('input', checkReady);
+  nameInput.addEventListener('focus', () => { initAudio(); sounds.start(); });
+  nameInput.addEventListener('input', () => { checkReady(); });
 
   function checkReady() {
     const ready = nameInput.value.trim().length > 0 && selectedChar !== '';
@@ -334,13 +367,17 @@ function showCharacterSelect() {
     btn.disabled = !ready;
     btn.style.opacity = ready ? '1' : '0.4';
     btn.style.cursor  = ready ? 'pointer' : 'not-allowed';
+    if (ready) {
+      btn.classList.add('btn-ready');
+    } else {
+      btn.classList.remove('btn-ready');
+    }
   }
 
   el.container.querySelector('#start-btn').addEventListener('click', () => {
     const name = nameInput.value.trim();
     if (!name || !selectedChar) return;
     sounds.click();
-    initAudio();
     startGame(name, selectedChar);
   });
 }
@@ -1030,7 +1067,12 @@ function openScoreModal() {
 /* ── Report Card ─────────────────────────────────────────────────────────────── */
 
 function showReportCard() {
-  sounds.stageComplete();
+  const _src = sounds.gameOver();
+  if (_src) {
+    _src.onended = () => sounds.thanks();
+  } else {
+    sounds.stageComplete();
+  }
   updateStageDots(4);
 
   const score = calculateFICOScore(gameState.credit);

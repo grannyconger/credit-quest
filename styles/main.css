@@ -58,7 +58,7 @@ body {
   height: 42px;
   border-radius: 50%;
   overflow: hidden;          /* clips character photo to circle */
-  background: var(--char-primary);
+  background: #e5e7eb;       /* light grey — photo contrasts against dark header */
   border: 2px solid var(--char-accent);
   display: flex;
   align-items: center;
@@ -613,12 +613,31 @@ body {
 .name-input-wrap input:focus { border-color: var(--char-primary); }
 
 .char-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
   width: 100%;
-  max-width: 600px;
 }
+/* Each card fills equal width in the 4-across row */
+.char-grid .char-card {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 8px;
+  text-align: center;
+}
+.char-grid .char-card-header {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.char-grid .char-card-avatar {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+}
+.char-grid .char-card-name  { font-size: 0.85rem; }
+.char-grid .char-card-blurb { font-size: 0.7rem; line-height: 1.4; }
 
 .char-card {
   background: var(--surface);
@@ -833,6 +852,69 @@ body {
 
 /* ── Boogaloo title font ─────────────────────────────────────────────────────── */
 .boogaloo { font-family: 'Boogaloo', 'Orbitron', monospace; }
+
+/* ── Credit Quest title — Mario-themed gradient ──────────────────────────────── */
+.credit-quest-title {
+  background: linear-gradient(90deg,
+    #DC2626 0%,    /* Mario red   */
+    #F59E0B 22%,   /* gold        */
+    #EC4899 44%,   /* Peach pink  */
+    #7C3AED 66%,   /* Toad purple */
+    #16A34A 88%,   /* Luigi green */
+    #2563EB 100%   /* sky blue    */
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.45));
+}
+
+/* ── Title splash overlay (animates on first load) ───────────────────────────── */
+#title-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;      /* don't block interaction underneath */
+  background: transparent;
+}
+.title-splash-word {
+  font-family: 'Boogaloo', monospace;
+  font-size: clamp(4rem, 12vw, 8rem);
+  line-height: 1;
+  background: linear-gradient(90deg,
+    #DC2626 0%, #F59E0B 22%, #EC4899 44%,
+    #7C3AED 66%, #16A34A 88%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.6));
+  animation: titleSplashAnim 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes titleSplashAnim {
+  0%   { opacity: 0; transform: scale(1.8); }
+  18%  { opacity: 1; transform: scale(1);   }
+  72%  { opacity: 1; transform: scale(1);   }
+  100% { opacity: 0; transform: scale(0.55) translateY(-30px); }
+}
+
+/* ── Char-select card: fades in after splash ─────────────────────────────────── */
+.char-select-fade-in {
+  animation: fadeInCard 500ms ease both;
+}
+@keyframes fadeInCard {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Start button — bright red when name + character ready ───────────────────── */
+.choice-btn.btn-ready {
+  background: #DC2626 !important;
+  box-shadow: 0 4px 0 #7F1D1D !important;
+  color: #fff !important;
+}
 
 /* ── "Explain More" expandable section ──────────────────────────────────────── */
 .explain-more-btn {
