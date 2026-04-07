@@ -21,7 +21,7 @@ body {
     linear-gradient(rgba(10, 10, 20, 0.72), rgba(10, 10, 20, 0.72)),
     url("../Mario Background Credit Quest.jpg");
   background-size: cover;
-  background-position: center top;
+  background-position: center 55%;
   background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
@@ -1115,3 +1115,118 @@ body {
 .instruction-card {
   animation: cardPop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* PROFOUNDLY WHIMSICAL ANIMATIONS                                                 */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Report card falling stars ────────────────────────────────────────────── */
+@keyframes starFall {
+  0%   { opacity: 0;   transform: translateY(0)     rotate(0deg)   scale(0.6); }
+  8%   { opacity: 1; }
+  85%  { opacity: 0.7; }
+  100% { opacity: 0;   transform: translateY(105vh)  rotate(720deg) scale(1.1); }
+}
+.report-star {
+  position: fixed;
+  top: -50px;
+  pointer-events: none;
+  z-index: 300;
+  animation: starFall linear both;
+  will-change: transform, opacity;
+}
+
+/* ── 2. Score delta float (+5 / -10 etc.) ────────────────────────────────────── */
+@keyframes deltaFloat {
+  0%   { opacity: 0;   transform: translateY(0)   scale(0.8); }
+  15%  { opacity: 1;   transform: translateY(-8px) scale(1.1); }
+  80%  { opacity: 1;   transform: translateY(-38px) scale(1); }
+  100% { opacity: 0;   transform: translateY(-52px) scale(0.9); }
+}
+.score-delta-float {
+  position: fixed;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 400;
+  animation: deltaFloat 1.4s ease-out both;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* ── 3. Stage-complete "Level Up" banner ─────────────────────────────────────── */
+@keyframes levelUpIn {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-8deg); }
+  60%  { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  80%  { transform: scale(0.96) rotate(-1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes levelUpOut {
+  0%   { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.8) translateY(-30px); }
+}
+#level-up-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 600;
+  pointer-events: none;
+  background: linear-gradient(135deg, #7C3AED, #DC2626, #F59E0B);
+  color: #fff;
+  font-family: 'Boogaloo', monospace;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  padding: 18px 48px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+#level-up-banner.in  { animation: levelUpIn  500ms cubic-bezier(0.34,1.56,0.64,1) both; }
+#level-up-banner.out { animation: levelUpOut 400ms ease-in both; }
+
+/* ── Apartment result call-to-action button ──────────────────────────────────── */
+.apartment-result-btn {
+  width: 100%;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #1D4ED8 0%, #6D28D9 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #1e3a8a;
+  transition: transform 0.1s, box-shadow 0.1s, filter 0.15s;
+  animation: apartmentPulse 2.2s ease-in-out infinite;
+  text-align: center;
+}
+.apartment-result-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+.apartment-result-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #1e3a8a;
+}
+@keyframes apartmentPulse {
+  0%, 100% { box-shadow: 0 5px 0 #1e3a8a, 0 0 0   0   rgba(109,40,217,0.4); }
+  50%       { box-shadow: 0 5px 0 #1e3a8a, 0 0 16px 6px rgba(109,40,217,0);   }
+}
+.apartment-result-callout {
+  background: linear-gradient(135deg, rgba(29,78,216,0.12), rgba(109,40,217,0.12));
+  border: 1px solid rgba(109,40,217,0.35);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: #4338CA;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* ── Stage image lightbox ────────────────────────────────────────────────────── */
+.stage-intro-img { cursor: zoom-in; }
+

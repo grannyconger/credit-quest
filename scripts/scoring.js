@@ -39,7 +39,9 @@ function makeCreditState() {
     newCredit: {             // Weight: 10%
       hardInquiries:  0,
       subScore:       100   // decreases per inquiry, recovers per stage
-    }
+    },
+
+    quizBonus: 0             // Flat bonus points from correct Knowledge Check answers
   };
 }
 
@@ -91,7 +93,8 @@ function calculateFICOScore(state) {
     (mixSubScore                   * 0.10) +
     (newCreditSubScore             * 0.10);
 
-  return Math.round(300 + (weighted / 100) * 550);
+  const base = Math.round(300 + (weighted / 100) * 550);
+  return Math.min(850, base + (state.quizBonus || 0));
 }
 
 /* ── Score Tier ───────────────────────────────────────────────────────────────── */

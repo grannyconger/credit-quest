@@ -264,6 +264,44 @@ function generateDeepExplanation(choice) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
+/* WHIMSICAL EFFECTS                                                               */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+function spawnReportStars() {
+  const symbols = ['⭐', '✨', '🌟', '💫', '★', '🪙', '🎉', '🏆'];
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('span');
+    el.className = 'report-star';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    const left = Math.random() * 98;
+    const delay = Math.random() * 1.8;
+    const dur   = 2.2 + Math.random() * 2.4;
+    const size  = 1 + Math.random() * 1.4;
+    el.style.cssText = `left:${left}%;font-size:${size}rem;animation-duration:${dur}s;animation-delay:${delay}s;`;
+    frag.appendChild(el);
+  }
+  const wrap = document.createElement('div');
+  wrap.id = 'report-stars-wrap';
+  wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden;';
+  wrap.appendChild(frag);
+  document.body.appendChild(wrap);
+  setTimeout(() => { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 5500);
+}
+
+function spawnScoreDeltaFloat(deltaText, color) {
+  const scoreEl = document.getElementById('score-number');
+  if (!scoreEl) return;
+  const rect = scoreEl.getBoundingClientRect();
+  const span = document.createElement('span');
+  span.className = 'score-delta-float';
+  span.textContent = deltaText;
+  span.style.cssText = `left:${rect.left + rect.width / 2 - 20}px;top:${rect.top}px;color:${color};`;
+  document.body.appendChild(span);
+  setTimeout(() => { if (span.parentNode) span.parentNode.removeChild(span); }, 1500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 /* SCREENS                                                                        */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
@@ -301,7 +339,7 @@ function showCharacterSelect() {
 
   setContent(`
     <div class="intro-card card char-select-fade-in" style="max-width:860px;margin:0 auto;opacity:0;">
-      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:#F9FAFB;">Credit Quest</h1>
+      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:#1a1a2e;">Credit Quest</h1>
       <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;margin-top:0.1rem;">A life-sim credit score adventure</p>
 
       <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Your Name</label>
@@ -555,11 +593,11 @@ function showStageIntroCard(stageNum) {
 
   setContent(`
     <div class="card" style="max-width:600px;margin:0 auto;text-align:center;">
-      <div class="orbitron" style="font-size:0.8rem;color:#6B7280;letter-spacing:0.12em;margin-bottom:0.5rem;">
+      <div class="orbitron" style="font-size:0.8rem;color:#374151;letter-spacing:0.12em;margin-bottom:0.5rem;">
         ${info.title.toUpperCase()}
       </div>
-      <h2 class="orbitron" style="color:var(--char-accent);font-size:1.4rem;margin-bottom:0.5rem;">${info.title}</h2>
-      <p style="color:#9CA3AF;margin-bottom:1.25rem;">${info.sub}</p>
+      <h2 class="orbitron" style="color:var(--char-primary);font-size:1.4rem;margin-bottom:0.5rem;">${info.title}</h2>
+      <p style="color:#4B5563;margin-bottom:1.25rem;">${info.sub}</p>
       <img class="stage-intro-img" src="./images/stage${stageNum}.png"
         onerror="this.style.display='none'" alt="${info.title}">
       <p>You're about to face <strong>4 financial decisions</strong> drawn from a pool of 10.
@@ -578,6 +616,31 @@ function showStageIntroCard(stageNum) {
     sounds.click();
     showNextScenario();
   });
+
+  // Stage image lightbox — click to spin/expand into a modal
+  const stageImg = el.container.querySelector('.stage-intro-img');
+  if (stageImg) {
+    stageImg.addEventListener('click', () => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;cursor:zoom-out;transition:background 300ms ease;';
+      const bigImg = document.createElement('img');
+      bigImg.src = stageImg.src;
+      bigImg.alt = stageImg.alt;
+      bigImg.style.cssText = 'max-width:90vw;max-height:85vh;border:8px solid #fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);object-fit:contain;transform:scale(0.05) rotate(-360deg);transition:transform 550ms cubic-bezier(0.34,1.56,0.64,1);';
+      overlay.appendChild(bigImg);
+      document.body.appendChild(overlay);
+      requestAnimationFrame(() => {
+        overlay.style.background = 'rgba(0,0,0,0.88)';
+        bigImg.style.transform = 'scale(1) rotate(0deg)';
+      });
+      overlay.addEventListener('click', () => {
+        overlay.style.background = 'rgba(0,0,0,0)';
+        bigImg.style.transform = 'scale(0.05) rotate(360deg)';
+        bigImg.style.transition = 'transform 400ms cubic-bezier(0.55,0,1,0.45)';
+        setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 420);
+      });
+    });
+  }
 }
 
 /* ── Scenario Rendering ───────────────────────────────────────────────────────── */
@@ -619,7 +682,7 @@ function renderScenario(scenario) {
   setContent(`
     <div class="scenario-wrapper" style="max-width:640px;margin:0 auto;">
       <div class="card" id="scenario-card">
-        <div style="font-size:0.75rem;color:#6B7280;letter-spacing:0.1em;margin-bottom:0.5rem;">
+        <div style="font-size:0.75rem;color:#374151;font-weight:600;letter-spacing:0.1em;margin-bottom:0.5rem;">
           ${scenario.setting} &nbsp;·&nbsp; ${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}
         </div>
         <h2 style="font-size:1.15rem;font-weight:700;color:var(--char-accent);margin-bottom:0.75rem;">
@@ -667,7 +730,7 @@ function renderConsequenceEvent(scenario) {
   setContent(`
     <div class="scenario-wrapper" style="max-width:640px;margin:0 auto;">
       <div class="card" id="scenario-card">
-        <div style="font-size:0.75rem;color:#6B7280;letter-spacing:0.1em;margin-bottom:0.5rem;">
+        <div style="font-size:0.75rem;color:#374151;font-weight:600;letter-spacing:0.1em;margin-bottom:0.5rem;">
           ${scenario.setting} &nbsp;·&nbsp; ${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}
         </div>
         <h2 style="font-size:1.15rem;font-weight:700;color:var(--char-accent);margin-bottom:0.75rem;">
@@ -677,9 +740,16 @@ function renderConsequenceEvent(scenario) {
           ${scenario.narrative}
         </div>
         <div id="consequence-area"></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
-          <button class="choice-btn" id="event-next-btn">SEE MY RESULT →</button>
-        </div>
+        ${scenario.id === 's3-01' ? `
+          <div class="apartment-result-callout">
+            📊 Your credit score is being evaluated right now — this is the first real-world consequence of every decision you've made since high school.
+          </div>
+          <button class="apartment-result-btn" id="event-next-btn">🏠 REVEAL MY APARTMENT RESULT →</button>
+        ` : `
+          <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+            <button class="choice-btn" id="event-next-btn">SEE MY RESULT →</button>
+          </div>
+        `}
       </div>
     </div>
   `);
@@ -833,6 +903,18 @@ function showQuizBridge(completedStage) {
   sounds.stageComplete();
   triggerBubble('stage-complete', gameState.character);
 
+  // Level-up banner
+  const banner = document.createElement('div');
+  banner.id = 'level-up-banner';
+  banner.textContent = `🌟 Stage ${completedStage} Complete! 🌟`;
+  banner.classList.add('in');
+  document.body.appendChild(banner);
+  setTimeout(() => {
+    banner.classList.remove('in');
+    banner.classList.add('out');
+    setTimeout(() => { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 420);
+  }, 1800);
+
   const bridgeNum = completedStage; // bridge 1 after stage 1, bridge 2 after stage 2
   const questions = getQuizBatch(gameState.quizDrawOrder, bridgeNum);
   gameState.quizAnswered.push(...questions.map(q => q.id));
@@ -859,7 +941,7 @@ function showQuizCard(questions, qIndex, completedStage) {
 
   setContent(`
     <div class="card" style="max-width:640px;margin:0 auto;">
-      <div style="font-size:0.75rem;color:#6B7280;letter-spacing:0.1em;margin-bottom:0.5rem;">
+      <div style="font-size:0.75rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:0.5rem;">
         KNOWLEDGE CHECK · ${qIndex + 1} OF ${questions.length}
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
@@ -885,6 +967,12 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
 
   if (correct) {
     gameState.bonusPoints += 5;
+    gameState.credit.quizBonus = (gameState.credit.quizBonus || 0) + 5;
+    if (gameState.credit.hasAnyCredit) {
+      const qs = calculateFICOScore(gameState.credit);
+      updateScoreDisplay(_animScore, qs);
+      spawnScoreDeltaFloat('+5', '#4ADE80');
+    }
     sounds.quizCorrect();
   } else {
     sounds.quizWrong();
@@ -914,7 +1002,7 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
     </div>
     ` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
-      <span style="color:#9CA3AF;font-size:0.85rem;line-height:1.6;">Bonus Points:<br><strong style="color:#E5E7EB;">${gameState.bonusPoints} / 30</strong></span>
+      <span style="color:#374151;font-size:0.85rem;line-height:1.6;">Bonus Points:<br><strong style="color:#111827;">${gameState.bonusPoints} / 30</strong></span>
       <button class="choice-btn" id="quiz-next-btn">
         ${qIndex + 1 < questions.length ? 'NEXT QUESTION →' : 'CONTINUE →'}
       </button>
@@ -1111,8 +1199,8 @@ function showReportCard() {
     return `
       <div style="margin-bottom:0.75rem;">
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;">
-          <span>${m.label}</span>
-          <span style="color:#9CA3AF;">${m.pct} · ${pct}/100</span>
+          <span style="color:#111827;font-weight:600;">${m.label}</span>
+          <span style="color:#4B5563;">${m.pct} · ${pct}/100</span>
         </div>
         <div style="background:#374151;border-radius:4px;height:10px;overflow:hidden;">
           <div style="height:100%;width:${pct}%;background:${pct >= 70 ? '#22C55E' : pct >= 40 ? '#F59E0B' : '#EF4444'};border-radius:4px;transition:width 800ms ease-out;"></div>
@@ -1132,23 +1220,23 @@ function showReportCard() {
   const journeyHTML = Object.keys(journeyByStage).sort().map(s => {
     const items = journeyByStage[s].map(d => {
       const sign = d.scoreEffect > 0 ? '+' : '';
-      const effColor = d.scoreEffect > 0 ? '#4ADE80' : d.scoreEffect < 0 ? '#F87171' : '#9CA3AF';
+      const effColor = d.scoreEffect > 0 ? '#16A34A' : d.scoreEffect < 0 ? '#DC2626' : '#4B5563';
       const eff = d.scoreEffect !== null
         ? `<span style="color:${effColor};font-weight:700;"> ${sign}${d.scoreEffect} pts</span>`
         : '';
-      return `<li style="margin-bottom:0.4rem;color:#E5E7EB;">
-        <span style="color:#F9FAFB;font-weight:600;">${d.scenarioTitle || d.scenarioId}</span>
-        <span style="color:#9CA3AF;"> — ${d.choiceLabel}</span>${eff}
+      return `<li style="margin-bottom:0.4rem;color:#1F2937;">
+        <span style="color:#111827;font-weight:600;">${d.scenarioTitle || d.scenarioId}</span>
+        <span style="color:#4B5563;"> — ${d.choiceLabel}</span>${eff}
       </li>`;
     }).join('');
     return `
       <div style="margin-bottom:1rem;">
-        <div style="font-size:0.7rem;letter-spacing:0.1em;color:#6B7280;font-weight:700;margin-bottom:0.4rem;text-transform:uppercase;">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;color:#374151;font-weight:700;margin-bottom:0.4rem;text-transform:uppercase;">
           ${STAGE_NAMES[s] || `Stage ${s}`}
         </div>
         <ul style="padding-left:1.25rem;margin:0;line-height:1.8;font-size:0.875rem;">${items}</ul>
       </div>`;
-  }).join('') || '<p style="color:#9CA3AF;">No decisions recorded.</p>';
+  }).join('') || '<p style="color:#4B5563;">No decisions recorded.</p>';
 
   // FICO factors plain-language card
   const ficoFactorsHTML = [
@@ -1158,11 +1246,11 @@ function showReportCard() {
     { icon: '🔄', pct: '10%', name: 'Credit Mix',          plain: 'Do you have both credit cards and loans? A healthy mix of types shows you can manage different debt.' },
     { icon: '🔍', pct: '10%', name: 'New Credit',          plain: 'Have you applied for a lot of new credit recently? Each application leaves a hard inquiry on your report.' },
   ].map(f => `
-    <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.9rem;padding-bottom:0.9rem;border-bottom:1px solid #1F2937;">
+    <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.9rem;padding-bottom:0.9rem;border-bottom:1px solid #D1D5DB;">
       <span style="font-size:1.4rem;flex-shrink:0;">${f.icon}</span>
       <div>
-        <div style="font-weight:700;color:#F9FAFB;font-size:0.9rem;">${f.name} <span style="color:var(--char-accent);font-size:0.8rem;">(${f.pct})</span></div>
-        <div style="color:#D1D5DB;font-size:0.85rem;line-height:1.5;margin-top:0.2rem;">${f.plain}</div>
+        <div style="font-weight:700;color:#111827;font-size:0.9rem;">${f.name} <span style="color:var(--char-primary);font-size:0.8rem;font-weight:700;">(${f.pct})</span></div>
+        <div style="color:#374151;font-size:0.85rem;line-height:1.5;margin-top:0.2rem;">${f.plain}</div>
       </div>
     </div>
   `).join('');
@@ -1172,7 +1260,7 @@ function showReportCard() {
 
       <!-- Header -->
       <div class="card" style="text-align:center;margin-bottom:1rem;">
-        <div class="orbitron" style="font-size:0.75rem;letter-spacing:0.15em;color:#6B7280;margin-bottom:0.5rem;">
+        <div class="orbitron" style="font-size:0.75rem;letter-spacing:0.15em;color:#374151;margin-bottom:0.5rem;">
           FINAL REPORT CARD
         </div>
         <h1 class="orbitron" style="color:var(--char-accent);font-size:1.6rem;margin-bottom:0.5rem;">
@@ -1191,15 +1279,15 @@ function showReportCard() {
         <div class="card-bubble">${closingBubble}</div>
 
         <div style="display:flex;justify-content:center;gap:2rem;margin-top:1rem;font-size:0.9rem;">
-          <div><span style="color:#9CA3AF;">Quiz Bonus</span><br><strong style="font-size:1.2rem;">${gameState.bonusPoints} / 30 pts</strong></div>
-          <div><span style="color:#9CA3AF;">Decisions Made</span><br><strong style="font-size:1.2rem;">${gameState.decisionsLog.length}</strong></div>
-          <div><span style="color:#9CA3AF;">Terms Learned</span><br><strong style="font-size:1.2rem;">${gameState.termsEncountered.size}</strong></div>
+          <div><span style="color:#4B5563;">Quiz Bonus</span><br><strong style="font-size:1.2rem;color:#111827;">${gameState.bonusPoints} / 30 pts</strong></div>
+          <div><span style="color:#4B5563;">Decisions Made</span><br><strong style="font-size:1.2rem;color:#111827;">${gameState.decisionsLog.length}</strong></div>
+          <div><span style="color:#4B5563;">Terms Learned</span><br><strong style="font-size:1.2rem;color:#111827;">${gameState.termsEncountered.size}</strong></div>
         </div>
       </div>
 
       <!-- Vocab Review (slot 2) -->
       <div class="card" style="margin-bottom:1rem;" id="vocab-section">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#374151;font-weight:700;margin-bottom:1rem;">
           VOCABULARY YOU ENCOUNTERED
         </div>
         <button class="choice-btn" id="vocab-toggle-btn" style="font-size:0.85rem;margin-bottom:0.75rem;">
@@ -1210,7 +1298,7 @@ function showReportCard() {
 
       <!-- What is a credit score? (replaces outcomes card) -->
       <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#374151;font-weight:700;margin-bottom:1rem;">
           THE 5 FACTORS THAT BUILD YOUR SCORE
         </div>
         ${ficoFactorsHTML}
@@ -1218,7 +1306,7 @@ function showReportCard() {
 
       <!-- FICO Factor Breakdown -->
       <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#374151;font-weight:700;margin-bottom:1rem;">
           YOUR FICO FACTOR BREAKDOWN
         </div>
         ${factorBars}
@@ -1226,7 +1314,7 @@ function showReportCard() {
 
       <!-- Journey -->
       <div class="card" style="margin-bottom:1rem;">
-        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#6B7280;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.1em;color:#374151;font-weight:700;margin-bottom:1rem;">
           YOUR JOURNEY
         </div>
         ${journeyHTML}
@@ -1243,6 +1331,7 @@ function showReportCard() {
   `);
 
   window.scrollTo(0, 0);
+  spawnReportStars();
 
   // Stagger the report card sections
   el.container.querySelectorAll('.card').forEach((card, i) => {
@@ -1263,7 +1352,7 @@ function showReportCard() {
           <p style="font-size:0.85rem;color:#D1D5DB;margin:0.25rem 0 0;">${entry.definition_en || ''}</p>
         </div>`;
       }).join('');
-      vocabList.innerHTML = entries || '<p style="color:#6B7280;">No terms tracked.</p>';
+      vocabList.innerHTML = entries || '<p style="color:#374151;">No terms tracked.</p>';
       vocabList.style.display = 'block';
       vocabBtn.textContent = 'HIDE TERMS';
       if (_dict) attachTooltips(vocabList, _dict);
