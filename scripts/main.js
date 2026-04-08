@@ -892,6 +892,11 @@ function renderConsequenceEvent(scenario) {
               🚗 Your credit score determines your interest rate right now.
             </div>
             <button class="car-result-btn" id="event-next-btn">🚗 Reveal My Rate →</button>
+          ` : scenario.id === 's3-03' ? `
+            <div class="job-result-callout">
+              📋 Your credit history is being reviewed for the background check.
+            </div>
+            <button class="job-result-btn" id="event-next-btn">🏢 Reveal My Result →</button>
           ` : `
             <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
               <button class="choice-btn" id="event-next-btn">See My Result →</button>
@@ -1103,10 +1108,13 @@ function showQuizCard(questions, qIndex, completedStage) {
     </button>
   `).join('');
 
+  const nextLabel = qIndex + 1 < questions.length ? 'Next Question →' : 'Continue →';
+
   setContent(`
-    <div style="width:100%;height:100%;display:flex;align-items:stretch;justify-content:center;overflow:hidden;min-height:0;">
-      <div class="card" style="max-width:none;width:100%;padding:24px 32px;display:flex;flex-direction:column;">
-        <div style="font-size:0.72rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:8px;">
+    <div style="width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;min-height:0;">
+      <div class="card" style="max-width:none;width:100%;padding:24px 32px;position:relative;">
+        <button id="quiz-next-btn" class="quiz-corner-btn" disabled>${nextLabel}</button>
+        <div style="font-size:0.72rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:8px;padding-right:140px;">
           KNOWLEDGE CHECK · ${qIndex + 1} OF ${questions.length}
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:12px;">
@@ -1115,10 +1123,15 @@ function showQuizCard(questions, qIndex, completedStage) {
         </div>
         <p style="font-weight:600;line-height:1.55;margin-bottom:18px;font-size:1.25rem;">${q.question}</p>
         <div id="quiz-choices" style="font-size:1.05rem;">${choicesHTML}</div>
-        <div id="quiz-result" style="display:none;"></div>
+        <div id="quiz-result" style="display:none;margin-top:1rem;"></div>
       </div>
     </div>
   `);
+
+  el.container.querySelector('#quiz-next-btn').addEventListener('click', () => {
+    sounds.click();
+    showQuizCard(questions, qIndex + 1, completedStage);
+  });
 
   el.container.querySelectorAll('.quiz-choice-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1155,11 +1168,11 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
   const resultEl = el.container.querySelector('#quiz-result');
   resultEl.style.display = 'block';
   resultEl.innerHTML = `
-    <div style="margin-top:1rem;padding:1rem;border-radius:8px;background:${correct ? '#14532D' : '#7F1D1D'};border:1px solid ${correct ? '#22C55E' : '#EF4444'};">
+    <div style="padding:1rem;border-radius:8px;background:${correct ? '#14532D' : '#7F1D1D'};border:1px solid ${correct ? '#22C55E' : '#EF4444'};">
       <div style="font-weight:700;margin-bottom:0.5rem;color:${correct ? '#4ADE80' : '#FCA5A5'};">
         ${correct ? '✅ Correct! +5 Bonus Points' : `❌ The correct answer was ${q.answer}`}
       </div>
-      <p style="font-size:0.9rem;color:#E5E7EB;margin:0;">${q.explanation}</p>
+      <p style="font-size:0.95rem;color:#E5E7EB;margin:0;">${q.explanation}</p>
     </div>
     ${q.deepDive ? `
     <div style="margin-top:0.5rem;">
@@ -1167,13 +1180,14 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
       <div class="explain-more-panel" id="quiz-explain-panel">${q.deepDive}</div>
     </div>
     ` : ''}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
-      <span style="color:#374151;font-size:0.85rem;line-height:1.6;">Bonus Points:<br><strong style="color:#111827;">${gameState.bonusPoints} / 30</strong></span>
-      <button class="choice-btn" id="quiz-next-btn">
-        ${qIndex + 1 < questions.length ? 'Next Question →' : 'Continue →'}
-      </button>
+    <div style="margin-top:0.75rem;font-size:0.88rem;color:#374151;line-height:1.6;">
+      Bonus Points: <strong style="color:#111827;">${gameState.bonusPoints} / 30</strong>
     </div>
   `;
+
+  // Enable the corner continue button
+  const nextBtn = el.container.querySelector('#quiz-next-btn');
+  if (nextBtn) nextBtn.disabled = false;
 
   const quizExplainBtn = resultEl.querySelector('#quiz-explain-btn');
   if (quizExplainBtn) {
@@ -1184,11 +1198,6 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
       quizExplainBtn.textContent = open ? '🔍 Show Less' : '🔍 Why\'d this happen?';
     });
   }
-
-  el.container.querySelector('#quiz-next-btn').addEventListener('click', () => {
-    sounds.click();
-    showQuizCard(questions, qIndex + 1, completedStage);
-  });
 }
 
 /* ── Score Modal ─────────────────────────────────────────────────────────────── */
