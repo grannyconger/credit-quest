@@ -11,6 +11,17 @@ function getCtx() {
   return audioCtx;
 }
 
+/* Tracks the earliest time (ms) each synth-sound key may play again */
+const _synthCooldowns = {};
+
+/* Returns true and records cooldown if the sound is allowed to play now */
+function _synthAllowed(key, durationMs) {
+  const now = Date.now();
+  if (_synthCooldowns[key] && now < _synthCooldowns[key]) return false;
+  _synthCooldowns[key] = now + durationMs;
+  return true;
+}
+
 function playTone(freq, dur, type = 'sine', gain = 0.3) {
   if (_muted) return;
   try {
@@ -39,8 +50,9 @@ const WAV_FILES = {
   'thanks':      'sounds/thanks.wav',
 };
 
-const _rawBuffers = {};  // name → ArrayBuffer (fetched, not yet decoded)
-const _buffers    = {};  // name → AudioBuffer  (decoded, ready to play)
+const _rawBuffers  = {};  // name → ArrayBuffer (fetched, not yet decoded)
+const _buffers     = {};  // name → AudioBuffer  (decoded, ready to play)
+const _activeSrcs  = {};  // name → BufferSourceNode currently playing (or null)
 
 /* Fetch all WAV files immediately — no AudioContext needed for fetch() */
 (async function prefetchSounds() {
@@ -64,9 +76,11 @@ async function decodeAllBuffers() {
   }
 }
 
-/* Play a decoded AudioBuffer. Returns the BufferSourceNode (or null). */
+/* Play a decoded AudioBuffer. Returns the BufferSourceNode (or null).
+   If the same sound is already playing it is ignored (no stacking). */
 function playBuffer(name, volume = 0.85) {
   if (_muted) return null;
+  if (_activeSrcs[name]) return null;  // already playing — ignore
   const buf = _buffers[name];
   if (!buf) return null;
   try {
@@ -77,6 +91,8 @@ function playBuffer(name, volume = 0.85) {
     src.buffer = buf;
     src.connect(gain); gain.connect(ctx.destination);
     gain.gain.value = volume;
+    _activeSrcs[name] = src;
+    src.onended = () => { _activeSrcs[name] = null; };
     src.start();
     return src;  // caller can attach .onended for chaining
   } catch(e) {
@@ -88,20 +104,21 @@ function playBuffer(name, volume = 0.85) {
 
 const sounds = {
   /* ── Existing synthesized sounds — unchanged ── */
-  goodChoice:    () => { [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.15), i * 100)); },
-  badChoice:     () => { playTone(220, 0.2, 'sawtooth'); setTimeout(() => playTone(196, 0.3, 'sawtooth'), 150); },
-  scoreUp:       () => { [523, 587, 659, 698, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.08), i * 80)); },
-  scoreDown:     () => { [784, 698, 659, 587, 523].forEach((f, i) => setTimeout(() => playTone(f, 0.08, 'triangle'), i * 80)); },
-  quizCorrect:   () => { playTone(880, 0.1); setTimeout(() => playTone(1047, 0.3), 100); },
-  quizWrong:     () => { playTone(200, 0.4, 'square', 0.2); },
-  stageComplete: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => playTone(f, 0.2), i * 130)); },
+  goodChoice:    () => { if (!_synthAllowed('goodChoice', 400)) return; [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.15), i * 100)); },
+  badChoice:     () => { if (!_synthAllowed('badChoice', 500)) return; playTone(220, 0.2, 'sawtooth'); setTimeout(() => playTone(196, 0.3, 'sawtooth'), 150); },
+  scoreUp:       () => { if (!_synthAllowed('scoreUp', 500)) return; [523, 587, 659, 698, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.08), i * 80)); },
+  scoreDown:     () => { if (!_synthAllowed('scoreDown', 500)) return; [784, 698, 659, 587, 523].forEach((f, i) => setTimeout(() => playTone(f, 0.08, 'triangle'), i * 80)); },
+  quizCorrect:   () => { if (!_synthAllowed('quizCorrect', 500)) return; playTone(880, 0.1); setTimeout(() => playTone(1047, 0.3), 100); },
+  quizWrong:     () => { if (!_synthAllowed('quizWrong', 500)) return; playTone(200, 0.4, 'square', 0.2); },
+  stageComplete: () => { if (!_synthAllowed('stageComplete', 800)) return; [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => playTone(f, 0.2), i * 130)); },
   stageCompletePerfect: () => {
+    if (!_synthAllowed('stageCompletePerfect', 1100)) return;
     [523, 659, 784, 1047, 1319, 1047, 1319, 1568].forEach((f, i) => setTimeout(() => playTone(f, 0.2), i * 110));
   },
-  modalOpen:  () => playTone(440, 0.12, 'sine', 0.15),
-  bubblePop:  () => playTone(800, 0.05, 'sine', 0.1),
-  easterEgg:  () => { [523, 659, 784, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.1), i * 90)); },
-  click:      () => playTone(600, 0.06, 'sine', 0.12),
+  modalOpen:  () => { if (!_synthAllowed('modalOpen', 200)) return; playTone(440, 0.12, 'sine', 0.15); },
+  bubblePop:  () => { if (!_synthAllowed('bubblePop', 100)) return; playTone(800, 0.05, 'sine', 0.1); },
+  easterEgg:  () => { if (!_synthAllowed('easterEgg', 700)) return; [523, 659, 784, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.1), i * 90)); },
+  click:      () => { if (!_synthAllowed('click', 150)) return; playTone(600, 0.06, 'sine', 0.12); },
 
   /* ── New WAV-backed sounds ── */
   onstart:    () => playBuffer('onstart'),
