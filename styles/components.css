@@ -409,13 +409,13 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: #f3f4f6;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.88rem;
+  font-size: 1.05rem;
   text-align: left;
   transition: border-color 0.15s, background 0.15s;
   width: 100%;

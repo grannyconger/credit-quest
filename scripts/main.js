@@ -298,6 +298,43 @@ function spawnReportStars() {
   setTimeout(() => { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 5500);
 }
 
+/* ── Portrait Firework Effect ────────────────────────────────────────────────── */
+
+function spawnPortraitStars(portraitEl) {
+  const rect = portraitEl.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const stars = ['⭐', '✨', '🌟', '💫'];
+  const count = 16;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('span');
+    star.className = 'portrait-star';
+    star.textContent = stars[i % 4];
+    const angle = (i / count) * Math.PI * 2;
+    const dist = 70 + Math.random() * 90;
+    const fx = Math.cos(angle) * dist;
+    const fy = Math.sin(angle) * dist;
+    const dur = (0.55 + Math.random() * 0.45).toFixed(2);
+    const size = (1.1 + Math.random() * 0.8).toFixed(2);
+    star.style.cssText = `left:${cx - 12}px;top:${cy - 12}px;font-size:${size}rem;--fx:${fx.toFixed(0)}px;--fy:${fy.toFixed(0)}px;--dur:${dur}s;`;
+    document.body.appendChild(star);
+    setTimeout(() => { if (star.parentNode) star.parentNode.removeChild(star); }, 1200);
+  }
+}
+
+function attachPortraitClickEffect() {
+  const portrait = el.container.querySelector('.scenario-char-portrait');
+  if (!portrait) return;
+  portrait.addEventListener('click', () => {
+    sounds.introChar(gameState.character);
+    portrait.classList.remove('portrait-spin');
+    void portrait.offsetWidth; // force reflow to restart animation
+    portrait.classList.add('portrait-spin');
+    portrait.addEventListener('animationend', () => portrait.classList.remove('portrait-spin'), { once: true });
+    spawnPortraitStars(portrait);
+  });
+}
+
 function spawnScoreDeltaFloat(deltaText, color) {
   const scoreEl = document.getElementById('score-number');
   if (!scoreEl) return;
@@ -513,7 +550,7 @@ const INTRO_CARDS = [
   }),
   () => ({
     speaker: 'THE RULES',
-    text: `Rule #1: Payment History is 35% of your score. Never miss a payment. Rule #2: Keep your card balance below 30% of your limit. Those two rules control 65% of everything. The quest starts now.`,
+    text: `Rule #1: Payment History is 35% of your score. Never miss a payment.<br>Rule #2: Keep your card balance below 30% of your limit.<br>Those two rules control 65% of everything. The quest starts now.`,
   }),
 ];
 
@@ -521,19 +558,29 @@ function _buildRpgBar(cardIndex, charId, charImg, charName) {
   const isStory   = cardIndex === -1;
   const totalReal = INTRO_CARDS.length;
   const total     = totalReal;
-  const realIdx   = cardIndex; // 0–3
+  const realIdx   = cardIndex; // 0–1
   const isLast    = realIdx === total - 1;
 
-  let cardData;
+  // Story screen: large centred text, character floats dimly in background
   if (isStory) {
-    cardData = {
-      speaker: 'CREDIT QUEST',
-      text: `The world needs one more hero — not to fight monsters, but to master money. Your credit score is the key that unlocks apartments, cars, and opportunities. Build it. Protect it. Let the quest begin.`,
-    };
-  } else {
-    cardData = INTRO_CARDS[realIdx](gameState.playerName);
-    cardData.speaker = realIdx === 0 ? gameState.playerName.toUpperCase() : 'NARRATOR';
+    return `
+      <div class="rpg-story-scene" id="rpg-scene-story">
+        <div class="rpg-story-bg">
+          <div class="rpg-story-bg-portrait">
+            <img src="./images/${charId}.jpg" alt="${charId}"
+              onerror="this.style.display='none'">
+          </div>
+        </div>
+        <div class="rpg-story-content">
+          <p class="rpg-story-text">The world needs one more hero —<br>not to fight monsters,<br>but to master money.</p>
+          <button class="rpg-story-continue" id="rpg-continue">Continue →</button>
+        </div>
+      </div>
+    `;
   }
+
+  const cardData = INTRO_CARDS[realIdx](gameState.playerName);
+  cardData.speaker = realIdx === 0 ? gameState.playerName.toUpperCase() : 'NARRATOR';
 
   const progDots = Array.from({ length: total }, (_, i) =>
     `<span style="width:7px;height:7px;border-radius:50%;background:${i === realIdx ? 'var(--char-accent)' : 'rgba(255,255,255,0.2)'}; display:inline-block;"></span>`
@@ -558,7 +605,7 @@ function _buildRpgBar(cardIndex, charId, charImg, charName) {
           <div class="rpg-content">
             <div class="rpg-speaker">${cardData.speaker}</div>
             <p class="rpg-text">${cardData.text}</p>
-            ${!isStory ? `<div class="rpg-meta">Tip ${realIdx + 1} of ${total} &nbsp; ${progDots}</div>` : ''}
+            <div class="rpg-meta">Tip ${realIdx + 1} of ${total} &nbsp; ${progDots}</div>
           </div>
           <div class="rpg-bar-actions">
             <button class="rpg-continue-btn" id="rpg-continue">${btnLabel}</button>
@@ -777,6 +824,8 @@ function renderScenario(scenario) {
     </div>
   `);
 
+  attachPortraitClickEffect();
+
   el.container.querySelectorAll('.scenario-choice').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.disabled) return;
@@ -838,6 +887,11 @@ function renderConsequenceEvent(scenario) {
               📊 Your credit score is being evaluated right now.
             </div>
             <button class="apartment-result-btn" id="event-next-btn">🏠 Reveal My Result →</button>
+          ` : scenario.id === 's3-02' ? `
+            <div class="car-result-callout">
+              🚗 Your credit score determines your interest rate right now.
+            </div>
+            <button class="car-result-btn" id="event-next-btn">🚗 Reveal My Rate →</button>
           ` : `
             <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
               <button class="choice-btn" id="event-next-btn">See My Result →</button>
@@ -847,6 +901,8 @@ function renderConsequenceEvent(scenario) {
       </div>
     </div>
   `);
+
+  attachPortraitClickEffect();
 
   el.container.querySelector('#event-next-btn').addEventListener('click', () => {
     sounds.click();
@@ -1048,17 +1104,17 @@ function showQuizCard(questions, qIndex, completedStage) {
   `).join('');
 
   setContent(`
-    <div style="width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;min-height:0;">
-      <div class="card" style="max-width:640px;width:100%;padding:20px 22px;">
-        <div style="font-size:0.72rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:6px;">
+    <div style="width:100%;height:100%;display:flex;align-items:stretch;justify-content:center;overflow:hidden;min-height:0;">
+      <div class="card" style="max-width:none;width:100%;padding:24px 32px;display:flex;flex-direction:column;">
+        <div style="font-size:0.72rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:8px;">
           KNOWLEDGE CHECK · ${qIndex + 1} OF ${questions.length}
         </div>
-        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:10px;">
-          <span style="font-size:1.3rem;">🧠</span>
-          <h2 style="font-size:1rem;font-weight:700;color:var(--char-accent);margin:0;">Extra Credit Points!</h2>
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:12px;">
+          <span style="font-size:1.5rem;">🧠</span>
+          <h2 style="font-size:1.25rem;font-weight:700;color:var(--char-accent);margin:0;">Extra Credit Points!</h2>
         </div>
-        <p style="font-weight:600;line-height:1.5;margin-bottom:14px;font-size:0.95rem;">${q.question}</p>
-        <div id="quiz-choices">${choicesHTML}</div>
+        <p style="font-weight:600;line-height:1.55;margin-bottom:18px;font-size:1.25rem;">${q.question}</p>
+        <div id="quiz-choices" style="font-size:1.05rem;">${choicesHTML}</div>
         <div id="quiz-result" style="display:none;"></div>
       </div>
     </div>
