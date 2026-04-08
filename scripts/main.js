@@ -46,11 +46,13 @@ const el = {
   scoreNumber:  document.getElementById('score-number'),
   scoreTier:    document.getElementById('score-tier'),
   scoreDelta:   document.getElementById('score-delta'),
+  scoreTrend:   document.getElementById('score-trend'),
   scoreDisplay: document.getElementById('score-display'),
   stageIndicator: document.getElementById('stage-indicator'),
   ficoBar:      document.getElementById('fico-bar'),
   charAvatar:   document.getElementById('char-avatar'),
   charName:     document.getElementById('char-name'),
+  charAge:      document.getElementById('char-age'),
   playerNameEl: document.getElementById('player-name-display'),
   muteBtn:      document.getElementById('mute-btn'),
   modalOverlay: document.getElementById('modal-overlay'),
@@ -125,6 +127,13 @@ function updateScoreDisplay(oldScore, newScore) {
   const change = describeScoreChange(oldScore, newScore);
   el.scoreDelta.textContent = change.label;
   el.scoreDelta.className   = `score-delta ${change.css}`;
+
+  // Trend arrow
+  if (el.scoreTrend) {
+    if (change.css === 'up')   { el.scoreTrend.textContent = '▲'; el.scoreTrend.className = 'up'; }
+    else if (change.css === 'down') { el.scoreTrend.textContent = '▼'; el.scoreTrend.className = 'down'; }
+    else                       { el.scoreTrend.textContent = '';  el.scoreTrend.className = ''; }
+  }
 
   // Threshold bubble triggers
   if (newScore >= 750 && (oldScore === null || oldScore < 750)) {
@@ -301,6 +310,61 @@ function spawnScoreDeltaFloat(deltaText, color) {
   setTimeout(() => { if (span.parentNode) span.parentNode.removeChild(span); }, 1500);
 }
 
+/* ── HUD Age Update ──────────────────────────────────────────────────────────── */
+
+const STAGE_AGE = { 1: 'Age 16–18', 2: 'Age 18–22', 3: 'Age 22–25' };
+
+function updateHudAge(stage) {
+  if (!el.charAge) return;
+  const label = STAGE_AGE[stage];
+  if (label) {
+    el.charAge.textContent = label;
+    el.charAge.style.display = 'block';
+  } else {
+    el.charAge.style.display = 'none';
+  }
+}
+
+/* ── Background drifting particles ──────────────────────────────────────────── */
+
+function initBgParticles() {
+  if (document.getElementById('bg-particles')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'bg-particles';
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'bg-particle';
+    const size  = 6 + Math.random() * 18;
+    const left  = Math.random() * 100;
+    const dur   = 14 + Math.random() * 22;
+    const delay = -(Math.random() * dur);
+    const dx    = (Math.random() - 0.5) * 120;
+    p.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${left}%;bottom:0;
+      animation-duration:${dur}s;
+      animation-delay:${delay}s;
+      --dx:${dx}px;
+    `;
+    wrap.appendChild(p);
+  }
+  document.body.insertBefore(wrap, document.body.firstChild);
+}
+
+/* ── Global click-sound delegation ──────────────────────────────────────────── */
+
+function initGlobalClickSounds() {
+  document.body.addEventListener('click', (e) => {
+    const target = e.target.closest('button, .char-tile, .quiz-choice-btn');
+    if (target && !target.disabled) {
+      // Only play if the target didn't already call sounds.click() itself
+      // (we check a flag to avoid double-fire from explicitly handled buttons)
+      if (!target.dataset.soundHandled) sounds.click();
+    }
+  }, true); // capture phase so it fires before handlers
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 /* SCREENS                                                                        */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -317,19 +381,7 @@ const CHARACTER_DATA = {
 function showCharacterSelect() {
   gameState.currentStage = 0;
   updateStageDots(0);
-
-  const cards = Object.entries(CHARACTER_DATA).map(([id, data]) => `
-    <button class="char-card" data-char="${id}" style="--cc-primary:${data.primary}">
-      <div class="char-card-header">
-        <div class="char-card-avatar" style="background:${data.primary}">
-            <img src="${data.img}" alt="${id}"
-              onerror="this.style.display='none';this.parentNode.textContent='${data.emoji}'">
-          </div>
-        <div class="char-card-name">${id.charAt(0).toUpperCase() + id.slice(1)}</div>
-      </div>
-      <div class="char-card-blurb">${data.blurb}</div>
-    </button>
-  `).join('');
+  updateHudAge(0);
 
   // Title splash overlay
   const splash = document.createElement('div');
@@ -337,37 +389,43 @@ function showCharacterSelect() {
   splash.innerHTML = `<span class="title-splash-word boogaloo">Credit Quest</span>`;
   document.body.appendChild(splash);
 
+  const tiles = Object.entries(CHARACTER_DATA).map(([id, data]) => `
+    <button class="char-tile" data-char="${id}" style="--cc-primary:${data.primary}">
+      <div class="char-tile-img-wrap">
+        <img src="${data.img}" alt="${id}"
+          onerror="this.style.display='none';this.parentNode.innerHTML='${data.emoji}'">
+      </div>
+      <div class="char-tile-name">${id.charAt(0).toUpperCase() + id.slice(1)}</div>
+      <div class="char-tile-blurb">${data.blurb}</div>
+    </button>
+  `).join('');
+
   setContent(`
-    <div class="intro-card card char-select-fade-in" style="max-width:860px;margin:0 auto;opacity:0;">
-      <h1 class="boogaloo" style="font-size:3rem;margin-bottom:0;letter-spacing:0.04em;color:#1a1a2e;">Credit Quest</h1>
-      <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;margin-top:0.1rem;">A life-sim credit score adventure</p>
-
-      <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Your Name</label>
-      <input id="name-input" type="text" placeholder="Enter your name…"
-        style="width:100%;padding:10px 14px;border-radius:8px;border:2px solid var(--char-primary);
-               background:#1a1a2e;color:#fff;font-family:inherit;font-size:1rem;
-               box-sizing:border-box;margin-bottom:1.5rem;"
-        maxlength="24">
-
-      <label style="display:block;margin-bottom:0.75rem;font-weight:700;">Choose Your Character</label>
-      <div class="char-grid">${cards}</div>
-
-      <button id="start-btn" class="choice-btn" style="width:100%;margin-top:1.5rem;font-size:1rem;opacity:0.4;cursor:not-allowed;" disabled>
-        START GAME →
+    <div class="char-select-panel" style="opacity:0;">
+      <div class="char-select-header">
+        <h1 class="boogaloo credit-quest-title" style="font-size:clamp(2.4rem,7vw,4.5rem);margin:0;">Credit Quest</h1>
+        <p class="char-select-tagline">Your credit score shapes your future. Build it wisely.</p>
+        <div class="char-name-row">
+          <label>Your Name</label>
+          <input id="name-input" type="text" placeholder="Enter your name…" maxlength="24" autocomplete="off">
+        </div>
+      </div>
+      <div class="char-select-label">Choose Your Character</div>
+      <div class="char-grid-full">${tiles}</div>
+      <button id="start-btn" class="start-quest-btn" disabled>
+        Start Quest →
       </button>
     </div>
   `);
 
-  const introCard = el.container.querySelector('.intro-card');
-
-  // Fade in the char-select card after splash animation (~2s)
+  const panel = el.container.querySelector('.char-select-panel');
   setTimeout(() => {
     if (splash.parentNode) splash.parentNode.removeChild(splash);
-    introCard.style.opacity = '1';
-    introCard.style.transition = 'opacity 400ms ease';
+    panel.style.opacity = '1';
+    panel.style.transition = 'opacity 400ms ease';
   }, 2000);
 
-  // onstart sound: play on first user gesture (autoplay policy requires this)
+  // onstart sound
   let _onstartPlayed = false;
   async function _tryOnstart() {
     if (_onstartPlayed) return;
@@ -382,12 +440,12 @@ function showCharacterSelect() {
 
   let selectedChar = '';
 
-  el.container.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('click', () => {
-      el.container.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedChar = card.dataset.char;
-      initAudio().then(() => sounds.introChar(card.dataset.char));
+  el.container.querySelectorAll('.char-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      el.container.querySelectorAll('.char-tile').forEach(t => t.classList.remove('selected'));
+      tile.classList.add('selected');
+      selectedChar = tile.dataset.char;
+      initAudio().then(() => sounds.introChar(tile.dataset.char));
       checkReady();
     });
   });
@@ -400,19 +458,14 @@ function showCharacterSelect() {
     await initAudio();
     sounds.start();
   });
-  nameInput.addEventListener('input', () => { checkReady(); });
+  nameInput.addEventListener('input', checkReady);
 
   function checkReady() {
     const ready = nameInput.value.trim().length > 0 && selectedChar !== '';
     const btn = el.container.querySelector('#start-btn');
     btn.disabled = !ready;
-    btn.style.opacity = ready ? '1' : '0.4';
-    btn.style.cursor  = ready ? 'pointer' : 'not-allowed';
-    if (ready) {
-      btn.classList.add('btn-ready');
-    } else {
-      btn.classList.remove('btn-ready');
-    }
+    if (ready) btn.classList.add('btn-ready');
+    else btn.classList.remove('btn-ready');
   }
 
   el.container.querySelector('#start-btn').addEventListener('click', () => {
@@ -442,50 +495,79 @@ function startGame(name, character) {
     onerror="this.parentNode.textContent='${_cd.emoji}'">`;
 
   updateScoreDisplay(null, null);
+  updateHudAge(0);
 
   triggerBubble('game-start', character);
   initEasterEggs(gameState);
 
-  showIntro(0);
+  showIntro(-1); // -1 = story framing screen
 }
 
 /* ── Intro Card Sequence ─────────────────────────────────────────────────────── */
 
+// -1 = story framing; 0–1 = tutorial cards (3 total screens before Stage 1)
 const INTRO_CARDS = [
-  (name) => `
-    <h2>Welcome, ${name}.</h2>
-    <p>You've just turned 16 — and somewhere out there, three organizations called
-    <span class="term" data-term="credit-bureau">Credit Bureaus</span> have just started a file on you.
-    Everything you do with borrowed money goes into that file. That file becomes your
-    <span class="term" data-term="credit-report">Credit Report</span>. That report gets turned into a number:
-    your <span class="term" data-term="credit-score">Credit Score</span>.</p>
-  `,
-  () => `
-    <h2>Why It Matters</h2>
-    <p>Your <span class="term" data-term="credit-score">Credit Score</span> is a number between 300 and 850.
-    Landlords, banks, car dealers, and even some employers use it to decide how much they trust you with money.
-    A high score opens doors. A low score — or no score at all — closes them.</p>
-  `,
-  () => `
-    <h2>Your Starting Point</h2>
-    <p>Right now? You have a <span class="term" data-term="thin-file">Thin File</span>. No
-    <span class="term" data-term="credit-history">Credit History</span> at all. Which means you have no score.
-    Over the next few years of this simulation, you'll make real decisions that either build that file
-    — or leave it empty. Either way, there are consequences.</p>
-  `,
-  () => `
-    <h2>The #1 Rule</h2>
-    <div class="rule-box">
-      <p style="margin:0;font-weight:700;font-size:1.05rem;color:var(--char-accent);">⚡ THE #1 RULE OF THIS GAME</p>
-    </div>
-    <p><span class="term" data-term="payment-history">Payment History</span> is <strong>35%</strong> of your
-    <span class="term" data-term="fico-score">FICO Score</span> — the biggest single factor. The #2 rule:
-    <span class="term" data-term="amounts-owed">Amounts Owed</span> (your
-    <span class="term" data-term="credit-utilization-rate">Credit Utilization Rate</span>) is <strong>30%</strong>.
-    Together, these two things control <strong>65%</strong> of your score.
-    <em>Never. Miss. A payment. Never max out your cards.</em></p>
-  `,
+  (name) => ({
+    speaker: name.toUpperCase(),
+    text: `You're 16. Three credit bureaus just opened a file on you. Your Credit Score — a number from 300 to 850 — will determine your apartment, your loan rates, maybe your job. Right now? You have no score at all.`,
+  }),
+  () => ({
+    speaker: 'THE RULES',
+    text: `Rule #1: Payment History is 35% of your score. Never miss a payment. Rule #2: Keep your card balance below 30% of your limit. Those two rules control 65% of everything. The quest starts now.`,
+  }),
 ];
+
+function _buildRpgBar(cardIndex, charId, charImg, charName) {
+  const isStory   = cardIndex === -1;
+  const totalReal = INTRO_CARDS.length;
+  const total     = totalReal;
+  const realIdx   = cardIndex; // 0–3
+  const isLast    = realIdx === total - 1;
+
+  let cardData;
+  if (isStory) {
+    cardData = {
+      speaker: 'CREDIT QUEST',
+      text: `The world needs one more hero — not to fight monsters, but to master money. Your credit score is the key that unlocks apartments, cars, and opportunities. Build it. Protect it. Let the quest begin.`,
+    };
+  } else {
+    cardData = INTRO_CARDS[realIdx](gameState.playerName);
+    cardData.speaker = realIdx === 0 ? gameState.playerName.toUpperCase() : 'NARRATOR';
+  }
+
+  const progDots = Array.from({ length: total }, (_, i) =>
+    `<span style="width:7px;height:7px;border-radius:50%;background:${i === realIdx ? 'var(--char-accent)' : 'rgba(255,255,255,0.2)'}; display:inline-block;"></span>`
+  ).join('');
+
+  const btnLabel = isLast ? 'Begin Stage 1 →' : 'Continue →';
+
+  return `
+    <div class="rpg-scene" id="rpg-scene-${cardIndex}">
+      <div class="rpg-scene-visual">
+        <div class="rpg-char-display">
+          <img src="./images/${charId}.jpg" alt="${charId}"
+            onerror="this.style.display='none'">
+        </div>
+      </div>
+      <div class="rpg-bar">
+        <div class="rpg-bar-inner">
+          <div class="rpg-portrait">
+            <img src="./images/${charId}.jpg" alt="${charId}"
+              onerror="this.style.display='none'">
+          </div>
+          <div class="rpg-content">
+            <div class="rpg-speaker">${cardData.speaker}</div>
+            <p class="rpg-text">${cardData.text}</p>
+            ${!isStory ? `<div class="rpg-meta">Tip ${realIdx + 1} of ${total} &nbsp; ${progDots}</div>` : ''}
+          </div>
+          <div class="rpg-bar-actions">
+            <button class="rpg-continue-btn" id="rpg-continue">${btnLabel}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 function showIntro(cardIndex) {
   if (cardIndex >= INTRO_CARDS.length) {
@@ -493,27 +575,20 @@ function showIntro(cardIndex) {
     return;
   }
 
-  const isLast = cardIndex === INTRO_CARDS.length - 1;
-  const cardHTML = INTRO_CARDS[cardIndex](gameState.playerName);
+  const _cd = CHARACTER_DATA[gameState.character];
+  setContent(_buildRpgBar(cardIndex, gameState.character, _cd.img, gameState.character));
 
-  setContent(`
-    <div class="instruction-card" style="max-width:600px;margin:0 auto;">
-      <div class="instruction-badge">📋 How to Play &nbsp;·&nbsp; ${cardIndex + 1} / ${INTRO_CARDS.length}</div>
-      ${cardHTML}
-      <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
-        <button class="choice-btn" id="intro-next-btn">
-          ${isLast ? 'BEGIN STAGE 1 →' : 'NEXT →'}
-        </button>
-      </div>
-    </div>
-  `);
+  // Attach tooltips to rpg-text
+  if (_dict) {
+    attachTooltips(el.container, _dict);
+    trackTerms(el.container, gameState);
+  }
 
-  el.container.querySelector('#intro-next-btn').addEventListener('click', () => {
+  el.container.querySelector('#rpg-continue').addEventListener('click', () => {
     sounds.click();
     showIntro(cardIndex + 1);
   });
 
-  // Show no-score bubble on first intro
   if (cardIndex === 0) {
     setTimeout(() => triggerBubble('no-score-first', gameState.character), 800);
   }
@@ -524,6 +599,7 @@ function showIntro(cardIndex) {
 function beginStage(stageNum) {
   gameState.currentStage = stageNum;
   updateStageDots(stageNum);
+  updateHudAge(stageNum);
 
   // Stage transition scoring
   if (stageNum > 1) {
@@ -561,7 +637,7 @@ function showThinFileWarning() {
       several decisions harder. Lenders see you as an unknown — and unknown is risky to them.</p>
       <p>Stage 2 will give you opportunities to start building. Don't miss them.</p>
       <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
-        <button class="choice-btn" id="thin-file-ok">GOT IT →</button>
+        <button class="choice-btn" id="thin-file-ok">Got It →</button>
       </div>
     </div>
   `);
@@ -581,33 +657,38 @@ const STAGE_LABELS = {
   3: { title: 'Stage 3: Young Adult',  sub: 'Ages 22–25 · Reality Hits Hard' },
 };
 
+const STAGE_TAGLINES = {
+  1: 'First decisions. Lasting consequences.',
+  2: 'The years that make or break your score.',
+  3: 'Reality doesn\'t care about excuses.',
+};
+
 function showStageIntroCard(stageNum) {
-  // Play character intro sound at the start of stage 2 and 3
   if (stageNum >= 2) {
     initAudio().then(() => sounds.introChar(gameState.character));
   }
 
-  const info = STAGE_LABELS[stageNum];
-  const score = calculateFICOScore(gameState.credit);
-  const tier  = getScoreTier(score);
+  updateHudAge(stageNum);
+
+  const info    = STAGE_LABELS[stageNum];
+  const score   = calculateFICOScore(gameState.credit);
+  const tier    = getScoreTier(score);
+  const tagline = STAGE_TAGLINES[stageNum] || '';
+  const imgSrc  = `./images/stage${stageNum}.png`;
 
   setContent(`
-    <div class="card" style="max-width:600px;margin:0 auto;text-align:center;">
-      <div class="orbitron" style="font-size:0.8rem;color:#374151;letter-spacing:0.12em;margin-bottom:0.5rem;">
-        ${info.title.toUpperCase()}
-      </div>
-      <h2 class="orbitron" style="color:var(--char-primary);font-size:1.4rem;margin-bottom:0.5rem;">${info.title}</h2>
-      <p style="color:#4B5563;margin-bottom:1.25rem;">${info.sub}</p>
-      <img class="stage-intro-img" src="./images/stage${stageNum}.png"
-        onerror="this.style.display='none'" alt="${info.title}">
-      <p>You're about to face <strong>4 financial decisions</strong> drawn from a pool of 10.
-      Every choice you make affects your
-      <span class="term" data-term="credit-score">Credit Score</span>.</p>
-      ${score ? `<p style="margin-top:0.75rem;">Starting this stage at
-        <strong style="color:${tier.color}">${score} — ${tier.label}</strong>
-      </p>` : ''}
-      <div style="display:flex;justify-content:center;margin-top:1.5rem;">
-        <button class="choice-btn" id="stage-go-btn">LET'S GO →</button>
+    <div class="stage-hero">
+      <div class="stage-hero-bg" style="background-image:url('${imgSrc}');"></div>
+      <div class="stage-hero-overlay"></div>
+      <div class="stage-hero-content">
+        <div class="stage-hero-label">Stage ${stageNum} of 3</div>
+        <h2 class="stage-hero-title">${info.title.replace(/Stage \d+: /, '')}</h2>
+        <div class="stage-hero-age">${info.sub.split('·')[0].trim()}</div>
+        <div class="stage-hero-tagline">"${tagline}"</div>
+        ${score ? `<div style="font-size:0.9rem;color:rgba(255,255,255,0.6);margin-bottom:20px;">
+          Entering at <strong style="color:${tier.color}">${score} — ${tier.label}</strong>
+        </div>` : ''}
+        <button class="stage-start-btn" id="stage-go-btn">Start Stage →</button>
       </div>
     </div>
   `);
@@ -616,31 +697,6 @@ function showStageIntroCard(stageNum) {
     sounds.click();
     showNextScenario();
   });
-
-  // Stage image lightbox — click to spin/expand into a modal
-  const stageImg = el.container.querySelector('.stage-intro-img');
-  if (stageImg) {
-    stageImg.addEventListener('click', () => {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;cursor:zoom-out;transition:background 300ms ease;';
-      const bigImg = document.createElement('img');
-      bigImg.src = stageImg.src;
-      bigImg.alt = stageImg.alt;
-      bigImg.style.cssText = 'max-width:90vw;max-height:85vh;border:8px solid #fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);object-fit:contain;transform:scale(0.05) rotate(-360deg);transition:transform 550ms cubic-bezier(0.34,1.56,0.64,1);';
-      overlay.appendChild(bigImg);
-      document.body.appendChild(overlay);
-      requestAnimationFrame(() => {
-        overlay.style.background = 'rgba(0,0,0,0.88)';
-        bigImg.style.transform = 'scale(1) rotate(0deg)';
-      });
-      overlay.addEventListener('click', () => {
-        overlay.style.background = 'rgba(0,0,0,0)';
-        bigImg.style.transform = 'scale(0.05) rotate(360deg)';
-        bigImg.style.transition = 'transform 400ms cubic-bezier(0.55,0,1,0.45)';
-        setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 420);
-      });
-    });
-  }
 }
 
 /* ── Scenario Rendering ───────────────────────────────────────────────────────── */
@@ -666,46 +722,76 @@ function showNextScenario() {
 
 function renderScenario(scenario) {
   const charBubbleText = scenario.characterBubble?.[gameState.character];
-  const bubbleHTML = charBubbleText
-    ? `<div class="card-bubble">${charBubbleText}</div>`
-    : '';
+  const _cd = CHARACTER_DATA[gameState.character];
 
-  const choicesHTML = scenario.choices.map((choice, i) => `
-    <button class="choice-btn scenario-choice" data-index="${i}" style="display:block;width:100%;margin-bottom:0.75rem;text-align:left;">
-      <span style="font-weight:700;margin-right:0.5rem;">${String.fromCharCode(65 + i)}.</span>
-      ${choice.label}
-    </button>
-  `).join('');
+  // Keep narrative HTML (preserves .term tooltip spans); CSS handles display
+  const narrativeLines = scenario.narrative || '';
 
-  const stageInfo = STAGE_LABELS[gameState.currentStage];
+  const takeaway = scenario.takeaway || scenario.decision || '';
+
+  const choicesHTML = scenario.choices.map((choice, i) => {
+    const tier = (choice.tier || '').toLowerCase();
+    const isRisky = tier === 'bad' || tier === 'risky' || tier === 'very bad';
+    return `
+      <button class="choice-btn scenario-choice" data-index="${i}" data-risky="${isRisky}"
+        style="display:block;width:100%;margin-bottom:0.75rem;text-align:left;">
+        <span style="font-weight:800;margin-right:0.5rem;opacity:0.7;">${String.fromCharCode(65 + i)}.</span>
+        ${choice.label}
+      </button>
+    `;
+  }).join('');
 
   setContent(`
-    <div class="scenario-wrapper" style="max-width:640px;margin:0 auto;">
-      <div class="card" id="scenario-card">
-        <div style="font-size:0.75rem;color:#374151;font-weight:600;letter-spacing:0.1em;margin-bottom:0.5rem;">
-          ${scenario.setting} &nbsp;·&nbsp; ${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}
+    <div class="scenario-wrapper scenario-two-col">
+
+      <!-- Left: character panel -->
+      <div class="scenario-left-panel">
+        <div class="scenario-char-portrait">
+          <img src="${_cd.img}" alt="${gameState.character}"
+            onerror="this.style.display='none'">
         </div>
-        <h2 style="font-size:1.15rem;font-weight:700;color:var(--char-accent);margin-bottom:0.75rem;">
-          ${scenario.title}
-        </h2>
-        ${bubbleHTML}
-        <div class="scenario-narrative" style="margin-bottom:1rem;line-height:1.7;">
-          ${scenario.narrative}
-        </div>
-        <div style="font-weight:700;margin-bottom:0.75rem;color:var(--char-accent);">
-          ❓ ${scenario.decision}
-        </div>
-        <div id="choices-area">
-          ${choicesHTML}
+        <div class="scenario-stage-label">${STAGE_LABELS[gameState.currentStage]?.title || ''}</div>
+        <div class="scenario-progress-label">${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}</div>
+        <div class="scenario-setting-badge">${scenario.setting}</div>
+        ${charBubbleText ? `<div class="card-bubble" style="margin:0;font-size:0.78rem;">${charBubbleText}</div>` : ''}
+      </div>
+
+      <!-- Right: scenario card -->
+      <div class="scenario-right-panel">
+        <div class="card" id="scenario-card">
+          <h2 style="font-size:1.1rem;font-weight:700;color:var(--char-accent);margin-bottom:10px;">
+            ${scenario.title}
+          </h2>
+          <div class="scenario-narrative" style="margin-bottom:12px;line-height:1.65;font-size:0.95rem;">
+            ${narrativeLines}
+          </div>
+          <div class="scenario-takeaway">
+            ⚡ ${takeaway}
+          </div>
+          <div id="choices-area">
+            ${choicesHTML}
+          </div>
         </div>
       </div>
+
     </div>
   `);
 
   el.container.querySelectorAll('.scenario-choice').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.index, 10);
-      recordChoice(scenario, idx);
+      if (btn.disabled) return;
+      const idx     = parseInt(btn.dataset.index, 10);
+      const isRisky = btn.dataset.risky === 'true';
+
+      // Visual pulse feedback
+      btn.classList.add(isRisky ? 'choice-pulse-risky' : 'choice-pulse-good');
+      setTimeout(() => {
+        // Disable all choices
+        el.container.querySelectorAll('.scenario-choice').forEach(b => {
+          b.disabled = true; b.style.opacity = '0.5';
+        });
+        recordChoice(scenario, idx);
+      }, 300);
     });
   });
 }
@@ -727,29 +813,37 @@ function renderConsequenceEvent(scenario) {
 
   const stageInfo = STAGE_LABELS[gameState.currentStage];
 
+  const _cd = CHARACTER_DATA[gameState.character];
   setContent(`
-    <div class="scenario-wrapper" style="max-width:640px;margin:0 auto;">
-      <div class="card" id="scenario-card">
-        <div style="font-size:0.75rem;color:#374151;font-weight:600;letter-spacing:0.1em;margin-bottom:0.5rem;">
-          ${scenario.setting} &nbsp;·&nbsp; ${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}
+    <div class="scenario-wrapper scenario-two-col">
+      <div class="scenario-left-panel">
+        <div class="scenario-char-portrait">
+          <img src="${_cd.img}" alt="${gameState.character}" onerror="this.style.display='none'">
         </div>
-        <h2 style="font-size:1.15rem;font-weight:700;color:var(--char-accent);margin-bottom:0.75rem;">
-          ${scenario.title}
-        </h2>
-        <div class="scenario-narrative" style="margin-bottom:1rem;line-height:1.7;">
-          ${scenario.narrative}
+        <div class="scenario-stage-label">${STAGE_LABELS[gameState.currentStage]?.title || ''}</div>
+        <div class="scenario-progress-label">${gameState.scenarioIndex + 1} of ${gameState.scenarioQueue.length}</div>
+        <div class="scenario-setting-badge">${scenario.setting}</div>
+      </div>
+      <div class="scenario-right-panel">
+        <div class="card" id="scenario-card">
+          <h2 style="font-size:1.1rem;font-weight:700;color:var(--char-accent);margin-bottom:10px;">
+            ${scenario.title}
+          </h2>
+          <div class="scenario-narrative" style="margin-bottom:12px;line-height:1.65;font-size:0.95rem;">
+            ${scenario.narrative || ''}
+          </div>
+          <div id="consequence-area"></div>
+          ${scenario.id === 's3-01' ? `
+            <div class="apartment-result-callout">
+              📊 Your credit score is being evaluated right now.
+            </div>
+            <button class="apartment-result-btn" id="event-next-btn">🏠 Reveal My Result →</button>
+          ` : `
+            <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+              <button class="choice-btn" id="event-next-btn">See My Result →</button>
+            </div>
+          `}
         </div>
-        <div id="consequence-area"></div>
-        ${scenario.id === 's3-01' ? `
-          <div class="apartment-result-callout">
-            📊 Your credit score is being evaluated right now — this is the first real-world consequence of every decision you've made since high school.
-          </div>
-          <button class="apartment-result-btn" id="event-next-btn">🏠 REVEAL MY APARTMENT RESULT →</button>
-        ` : `
-          <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
-            <button class="choice-btn" id="event-next-btn">SEE MY RESULT →</button>
-          </div>
-        `}
       </div>
     </div>
   `);
@@ -830,65 +924,79 @@ function showConsequenceResult(scenario, choice, scoreData) {
     </div>`;
   }).join('');
 
+  // Build animated stat bars from factor highlights
+  const subs = getFactorSubScores(gameState.credit);
+  const statBarsHTML = (choice.factorHighlight || []).map(f => {
+    const meta = FACTOR_META.find(m => m.key === f || m.key === f.replace(/-/g, ''));
+    if (!meta) return '';
+    const pct = subs[meta.key] || 0;
+    const cls = pct >= 70 ? 'good' : pct >= 40 ? 'fair' : 'poor';
+    return `<div class="stat-bar-row">
+      <span class="stat-bar-label">${meta.label}</span>
+      <div class="stat-bar-track"><div class="stat-bar-fill ${cls}" data-pct="${pct}"></div></div>
+      <span class="stat-bar-pct">${meta.pct}</span>
+    </div>`;
+  }).join('');
+
+  const conseqText = choice.consequenceText || choice.text || '';
+
   const conseqCard = document.createElement('div');
   conseqCard.className = 'consequence-card card-dark';
   conseqCard.innerHTML = `
-    <div style="font-size:1.8rem;margin-bottom:0.5rem;">${choice.consequenceEmoji || '📋'}</div>
-    <h3 style="color:var(--char-accent);margin-bottom:0.75rem;">${choice.consequenceTitle || 'What Happened'}</h3>
-    <p style="line-height:1.7;margin-bottom:1rem;">${choice.consequenceText || choice.text || ''}</p>
-    ${scoreData ? `
-    <div class="score-impact-row" style="margin-bottom:1rem;">
-      <span class="score-impact-label">SCORE IMPACT:</span>
-      <span class="score-delta ${change.css}" style="font-size:1.1rem;font-weight:700;">${change.label}</span>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <span style="font-size:1.8rem;">${choice.consequenceEmoji || '📋'}</span>
+      <h3 style="color:var(--char-accent);margin:0;">${choice.consequenceTitle || 'What Happened'}</h3>
     </div>
+    <p style="line-height:1.65;margin-bottom:12px;font-size:0.93rem;">${conseqText}</p>
+    ${scoreData ? `
+    <div class="conseq-score-big">
+      <span class="conseq-score-num" style="color:${getScoreTier(scoreData.newScore).color};">${scoreData.newScore || '—'}</span>
+      ${change.label ? `<span class="conseq-score-change ${change.css}">${change.label}</span>` : ''}
+    </div>
+    <div style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">${getScoreTier(scoreData.newScore).label}</div>
     ` : ''}
-    ${factorHighlights ? `<div class="factor-highlights" style="margin-bottom:1rem;">${factorHighlights}</div>` : ''}
+    ${statBarsHTML ? `<div class="stat-bar-section">${statBarsHTML}</div>` : ''}
     ${consequenceBubble ? `<div class="card-bubble" style="margin-bottom:1rem;">${consequenceBubble}</div>` : ''}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;flex-wrap:wrap;gap:0.5rem;">
-      ${scoreData ? '<button class="explain-more-btn" id="explain-btn">🔍 Explain More</button>' : '<span></span>'}
-      <button class="choice-btn" id="next-btn">NEXT →</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
+      ${scoreData ? '<button class="explain-more-btn" id="explain-btn">🔍 Why\'d this happen?</button>' : '<span></span>'}
+      <button class="choice-btn" id="next-btn">Continue →</button>
     </div>
     ${scoreData ? '<div class="explain-more-panel" id="explain-panel"></div>' : ''}
   `;
 
-  // Append below existing card (so player can see choice context)
-  const wrapper = el.container.querySelector('.scenario-wrapper');
-  if (wrapper) {
-    // Disable choice buttons
-    wrapper.querySelectorAll('.scenario-choice, #event-next-btn').forEach(b => {
-      b.disabled = true;
-      b.style.opacity = '0.5';
-    });
-    wrapper.appendChild(conseqCard);
-    conseqCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Replace the right panel with the consequence card (keeps viewport, no scroll)
+  const rightPanel = el.container.querySelector('.scenario-right-panel');
+  if (rightPanel) {
+    rightPanel.innerHTML = '';
+    rightPanel.appendChild(conseqCard);
   } else {
+    // Fallback: replace full container
+    el.container.innerHTML = '';
     el.container.appendChild(conseqCard);
   }
 
-  // Factor highlights animate in after 200ms
+  // Animate stat bars in after a short delay
   setTimeout(() => {
-    conseqCard.querySelectorAll('.factor-bar-fill').forEach(bar => {
-      const w = bar.style.width;
-      bar.style.width = '0';
-      requestAnimationFrame(() => {
-        bar.style.transition = 'width 600ms ease-out';
-        bar.style.width = w;
-      });
+    conseqCard.querySelectorAll('.stat-bar-fill').forEach((bar, i) => {
+      setTimeout(() => {
+        bar.style.width = `${bar.dataset.pct}%`;
+      }, i * 120);
     });
-  }, 200);
+  }, 250);
 
-  // Explain More toggle (only present for player-choice consequences, not consequence-events)
+  // "Why'd this happen?" toggle — hidden by default, expands inline
   const explainBtn   = conseqCard.querySelector('#explain-btn');
   const explainPanel = conseqCard.querySelector('#explain-panel');
-  if (explainBtn && explainPanel) explainBtn.addEventListener('click', () => {
-    sounds.click();
-    const open = explainPanel.classList.toggle('open');
-    explainBtn.textContent = open ? '🔍 Show Less' : '🔍 Explain More';
-    if (open && !explainPanel.innerHTML) {
-      explainPanel.innerHTML = generateDeepExplanation(choice);
-    }
-    if (open) explainPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });  // end if explainBtn
+  if (explainBtn && explainPanel) {
+    explainBtn.addEventListener('click', () => {
+      sounds.click();
+      const open = explainPanel.classList.toggle('open');
+      explainBtn.textContent = open ? '🔍 Show Less' : '🔍 Why\'d this happen?';
+      if (open && !explainPanel.innerHTML) {
+        explainPanel.innerHTML = generateDeepExplanation(choice);
+      }
+    });
+  }
 
   conseqCard.querySelector('#next-btn').addEventListener('click', () => {
     sounds.click();
@@ -940,17 +1048,19 @@ function showQuizCard(questions, qIndex, completedStage) {
   `).join('');
 
   setContent(`
-    <div class="card" style="max-width:640px;margin:0 auto;">
-      <div style="font-size:0.75rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:0.5rem;">
-        KNOWLEDGE CHECK · ${qIndex + 1} OF ${questions.length}
+    <div style="width:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;min-height:0;">
+      <div class="card" style="max-width:640px;width:100%;padding:20px 22px;">
+        <div style="font-size:0.72rem;color:#374151;font-weight:700;letter-spacing:0.1em;margin-bottom:6px;">
+          KNOWLEDGE CHECK · ${qIndex + 1} OF ${questions.length}
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:10px;">
+          <span style="font-size:1.3rem;">🧠</span>
+          <h2 style="font-size:1rem;font-weight:700;color:var(--char-accent);margin:0;">Extra Credit Points!</h2>
+        </div>
+        <p style="font-weight:600;line-height:1.5;margin-bottom:14px;font-size:0.95rem;">${q.question}</p>
+        <div id="quiz-choices">${choicesHTML}</div>
+        <div id="quiz-result" style="display:none;"></div>
       </div>
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
-        <span style="font-size:1.5rem;">🧠</span>
-        <h2 style="font-size:1.05rem;font-weight:700;color:var(--char-accent);">Extra Credit Points!</h2>
-      </div>
-      <p style="font-weight:600;line-height:1.6;margin-bottom:1.25rem;">${q.question}</p>
-      <div id="quiz-choices">${choicesHTML}</div>
-      <div id="quiz-result" style="display:none;"></div>
     </div>
   `);
 
@@ -997,14 +1107,14 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
     </div>
     ${q.deepDive ? `
     <div style="margin-top:0.5rem;">
-      <button class="explain-more-btn" id="quiz-explain-btn">🔍 Explain More</button>
+      <button class="explain-more-btn" id="quiz-explain-btn">🔍 Why'd this happen?</button>
       <div class="explain-more-panel" id="quiz-explain-panel">${q.deepDive}</div>
     </div>
     ` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
       <span style="color:#374151;font-size:0.85rem;line-height:1.6;">Bonus Points:<br><strong style="color:#111827;">${gameState.bonusPoints} / 30</strong></span>
       <button class="choice-btn" id="quiz-next-btn">
-        ${qIndex + 1 < questions.length ? 'NEXT QUESTION →' : 'CONTINUE →'}
+        ${qIndex + 1 < questions.length ? 'Next Question →' : 'Continue →'}
       </button>
     </div>
   `;
@@ -1015,7 +1125,7 @@ function handleQuizAnswer(q, chosen, questions, qIndex, completedStage) {
     quizExplainBtn.addEventListener('click', () => {
       sounds.click();
       const open = panel.classList.toggle('open');
-      quizExplainBtn.textContent = open ? '🔍 Show Less' : '🔍 Explain More';
+      quizExplainBtn.textContent = open ? '🔍 Show Less' : '🔍 Why\'d this happen?';
     });
   }
 
@@ -1174,6 +1284,7 @@ function showReportCard() {
   } else {
     sounds.stageComplete();
   }
+  el.container.classList.add('scrollable');
   updateStageDots(4);
 
   const score = calculateFICOScore(gameState.credit);
@@ -1330,7 +1441,7 @@ function showReportCard() {
     </div>
   `);
 
-  window.scrollTo(0, 0);
+  el.container.scrollTop = 0;
   spawnReportStars();
 
   // Stagger the report card sections
@@ -1394,9 +1505,12 @@ function resetGame() {
   gameState.termsEncountered = new Set();
 
   el.body.className = '';
+  el.container.classList.remove('scrollable');
   el.playerNameEl.textContent = '';
   el.charName.textContent     = '';
   el.charAvatar.innerHTML = '⭐';
+  if (el.charAge) { el.charAge.textContent = ''; el.charAge.style.display = 'none'; }
+  if (el.scoreTrend) { el.scoreTrend.textContent = ''; el.scoreTrend.className = ''; }
   updateScoreDisplay(null, null);
   updateStageDots(0);
 
@@ -1433,6 +1547,8 @@ async function init() {
 
   initMuteToggle();
   initScoreClick();
+  initBgParticles();
+  initGlobalClickSounds();
 
   // Easter eggs need game state — init after state exists
   // (called after character is selected to avoid null character)
