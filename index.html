@@ -17,19 +17,20 @@
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/themes.css">
   <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/screens.css">
 </head>
-<body class="">
+<body>
 
   <!-- ── Persistent Header ───────────────────────────────────────────────── -->
   <header id="game-header">
     <div id="header-left">
-      <div id="char-avatar-wrap" style="position:relative;">
+      <div id="char-avatar-wrap">
         <div id="char-avatar">⭐</div>
       </div>
       <div id="char-info">
-        <div id="char-name" class="orbitron" style="font-size:0.75rem;color:var(--char-accent);letter-spacing:0.08em;">—</div>
-        <div id="player-name-display" style="font-size:0.85rem;font-weight:600;color:#E5E7EB;"></div>
-        <div id="char-age" style="font-size:0.72rem;color:var(--text-muted);font-weight:500;display:none;"></div>
+        <div id="char-name" class="orbitron">—</div>
+        <div id="player-name-display"></div>
+        <div id="char-age"></div>
       </div>
     </div>
 
@@ -43,13 +44,13 @@
 
     <div id="header-right">
       <div id="score-display" title="Click to see your full credit score breakdown">
-        <div style="display:flex;align-items:baseline;gap:0.4rem;">
-          <span class="orbitron" id="score-number" style="font-size:1.6rem;font-weight:900;color:#6B7280;">—</span>
-          <span id="score-trend" style="font-size:1rem;font-weight:900;"></span>
+        <div class="score-row">
+          <span class="orbitron" id="score-number">—</span>
+          <span id="score-trend"></span>
           <span id="score-delta" class="score-delta neutral"></span>
         </div>
-        <div id="score-tier" style="font-size:0.7rem;color:#6B7280;letter-spacing:0.06em;">No Score Yet</div>
-        <div id="score-label" style="font-size:0.65rem;color:#4B5563;letter-spacing:0.12em;cursor:pointer;">SCORE ▾</div>
+        <div id="score-tier">No Score Yet</div>
+        <div id="score-label">SCORE ▾</div>
       </div>
 
       <div id="fico-bar">
@@ -60,7 +61,7 @@
         <div class="fico-segment poor"  title="New Credit (10%)"></div>
       </div>
 
-      <button id="mute-btn" title="Mute sounds" style="background:none;border:none;color:#6B7280;font-size:1.1rem;cursor:pointer;padding:4px;">🔊</button>
+      <button id="mute-btn" title="Mute sounds">🔊</button>
     </div>
   </header>
 
@@ -70,21 +71,14 @@
   </main>
 
   <!-- ── Score Modal ─────────────────────────────────────────────────────── -->
-  <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
-    z-index:1000;align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto;">
+  <div id="modal-overlay">
     <div id="score-modal" class="score-modal">
       <!-- Populated by openScoreModal() -->
     </div>
   </div>
 
-  <!-- ── Scripts ─────────────────────────────────────────────────────────── -->
-  <script src="scripts/scoring.js"></script>
-  <script src="scripts/quiz.js"></script>
-  <script src="scripts/scenarios.js"></script>
-  <script src="scripts/tooltip.js"></script>
-  <script src="scripts/audio.js"></script>
-  <script src="scripts/bubbles.js"></script>
-  <script src="scripts/main.js"></script>
+  <!-- ── Scripts (ES modules; see scripts/main.js for the layout) ───────────── -->
+  <script type="module" src="scripts/main.js"></script>
 
 </body>
 </html>

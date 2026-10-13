@@ -1,10 +1,10 @@
 /* ── Credit Quest: Character Bubble System + Easter Eggs ────────────────────── */
 
-'use strict';
+import { sounds } from './audio.js';
 
 /* ── All Character Quip Sets ─────────────────────────────────────────────────── */
 
-const bubbles = {
+export const bubbles = {
   intro: {
     mario: "Let's-a go! Time to build something great — starting with your credit score!",
     luigi: "A fresh start! I've read every credit article on the internet. You're welcome.",
@@ -108,7 +108,7 @@ const bubbles = {
 let _currentBubble = null;
 let _bubbleTimer   = null;
 
-function showBubble(text, duration = 4000) {
+export function showBubble(text, duration = 4000) {
   const avatarEl = document.getElementById('char-avatar');
   if (!avatarEl) return;
 
@@ -129,7 +129,7 @@ function showBubble(text, duration = 4000) {
   avatarEl.appendChild(bubble);
   _currentBubble = bubble;
 
-  if (typeof sounds !== 'undefined') sounds.bubblePop();
+  sounds.bubblePop();
 
   _bubbleTimer = setTimeout(() => {
     if (_currentBubble === bubble) {
@@ -142,14 +142,14 @@ function showBubble(text, duration = 4000) {
   }, duration);
 }
 
-function showBubbleForChar(quipSet, character, duration = 4000) {
+export function showBubbleForChar(quipSet, character, duration = 4000) {
   const text = quipSet[character] || quipSet.toad;
   showBubble(text, duration);
 }
 
 /* ── Trigger by Named Event ──────────────────────────────────────────────────── */
 
-const bubbleTriggers = {
+export const bubbleTriggers = {
   'game-start':          bubbles.intro,
   'no-score-first':      bubbles.noScore,
   'payment-history-explain': bubbles.paymentHistory,
@@ -157,7 +157,7 @@ const bubbleTriggers = {
   'score-750':           bubbles.highScore,
   'score-580':           bubbles.lowScore,
   'ignore-collections':  bubbles.collections,
-  'consequence-S3-09-B': bubbles.creditRepairScam,
+  'credit-repair-scam':  bubbles.creditRepairScam,
   'thin-file-warning':   bubbles.thinFile,
   'stage-complete':      bubbles.stageComplete,
   'report-perfect':      bubbles.reportPerfect,
@@ -168,7 +168,7 @@ const bubbleTriggers = {
   'score-fact':          bubbles.scoreFact,
 };
 
-function triggerBubble(eventKey, character, duration = 4000) {
+export function triggerBubble(eventKey, character, duration = 4000) {
   const quipSet = bubbleTriggers[eventKey];
   if (!quipSet) return;
   showBubbleForChar(quipSet, character, duration);
@@ -198,7 +198,7 @@ function _fireKonamiEasterEgg(character, gameState) {
     const orig = scoreEl.textContent;
     scoreEl.textContent = '????';
     scoreEl.closest('#score-display')?.classList.add('rainbow-flash');
-    if (typeof sounds !== 'undefined') sounds.easterEgg();
+    sounds.easterEgg();
     triggerBubble('konami-code', character, 5000);
     setTimeout(() => {
       scoreEl.textContent = orig;
@@ -256,7 +256,7 @@ function _handleScoreTitleClick(character) {
 
 /* ── Easter Egg: Score === 666 ───────────────────────────────────────────────── */
 
-function checkDevilScore(score, character) {
+export function checkDevilScore(score, character) {
   if (score !== 666) return;
   const scoreEl = document.getElementById('score-number');
   if (!scoreEl) return;
@@ -269,7 +269,7 @@ function checkDevilScore(score, character) {
 
 /* ── Initialize Easter Egg Listeners ─────────────────────────────────────────── */
 
-function initEasterEggs(gameState) {
+export function initEasterEggs(gameState) {
   const character = () => gameState.character || 'toad';
 
   // Konami code

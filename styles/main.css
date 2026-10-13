@@ -19,7 +19,7 @@ body {
   background-color: var(--bg);
   background-image:
     linear-gradient(rgba(10, 10, 20, 0.44), rgba(10, 10, 20, 0.52)),
-    url("../Mario Background Credit Quest.jpg");
+    url("../images/background.jpg");
   background-size: cover;
   background-position: center 55%;
   background-attachment: fixed;

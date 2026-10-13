@@ -1,18 +1,17 @@
 /* ── Credit Quest: Scenario Pool (30 total, 10 per stage) ────────────────────── */
 
-'use strict';
 
 /* ══════════════════════════════════════════════════════════════════════════════ */
-/* STAGE 1 — HIGH SCHOOL (Ages 16-17)                                           */
+/* STAGE 1 — HIGH SCHOOL (Age 18)                                                */
 /* ══════════════════════════════════════════════════════════════════════════════ */
 
-const stage1Pool = [
+export const stage1Pool = [
 
   /* S1-01 ── Secured Credit Card Offer ──────────────────────────────────────── */
   {
     id: 's1-01', stage: 1,
     title: 'Your First Credit Card',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     alwaysFirst: true, // always shown as first scenario in Stage 1
     characterBubble: {
       mario: "Let's-a go! First card is like finding a Star — powerful if used right.",
@@ -20,7 +19,7 @@ const stage1Pool = [
       peach: "Even I had to start somewhere. The castle didn't finance itself.",
       toad:  "My cousin got one of these and bought a jet ski. Don't be my cousin."
     },
-    narrative: `Your mom mentions that her bank offers a <span class="term" data-term="secured_credit_card">Secured Credit Card</span> for teens — you put down a $300 deposit as collateral, and that becomes your limit. It's the first real step toward building a <span class="term" data-term="credit_history">Credit History</span> and getting your <span class="term" data-term="credit_report">Credit Report</span> started. Without action, you remain a <span class="term" data-term="thin_file">Thin File</span>.`,
+    narrative: `You just turned 18 — old enough to open a credit account in your own name. Your bank offers a <span class="term" data-term="secured_credit_card">Secured Credit Card</span>: you put down a $300 deposit as collateral, and that becomes your limit. It's the first real step toward building a <span class="term" data-term="credit_history">Credit History</span> and getting your <span class="term" data-term="credit_report">Credit Report</span> started. Without action, you remain a <span class="term" data-term="thin_file">Thin File</span>.`,
     decision: 'Do you apply for the card?',
     choices: [
       {
@@ -86,7 +85,7 @@ const stage1Pool = [
   {
     id: 's1-02', stage: 1,
     title: "Piggyback on Dad's Good Credit",
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "Free credit history?! It's-a like getting an extra life without doing anything!",
       luigi: "This is actually legitimate strategy. I've researched it extensively.",
@@ -155,7 +154,7 @@ const stage1Pool = [
   {
     id: 's1-03', stage: 1,
     title: 'Phone Financing Offer',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "A new phone AND an installment loan? Two power-ups, one coin block!",
       luigi: "I calculated the total interest cost before accepting. Have you?",
@@ -180,7 +179,7 @@ const stage1Pool = [
         effects: {
           hasAnyCredit: true,
           creditMix:    { hasInstallmentLoan: true },
-          amountsOwed:  { limitDelta: 600, balanceDelta: 600 },
+          installment:  { balanceDelta: 600 },
           newCredit:    { hardInquiries: 1 },
           lengthHistory:{ delta: 5 }
         }
@@ -220,7 +219,7 @@ const stage1Pool = [
   {
     id: 's1-04', stage: 1,
     title: 'Holiday Store Credit Card Blitz',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "20% off everything?! Wait — how many Hard Inquiries is that?",
       luigi: "Three applications. Three Hard Inquiries. I'm going to be sick.",
@@ -292,7 +291,7 @@ const stage1Pool = [
   {
     id: 's1-05', stage: 1,
     title: '"Free Credit Score" — Plot Twist',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "If it sounds too good to be free... it's probably a-not free.",
       luigi: "I checked the URL. The SSL cert. The company registration. Then I closed the tab.",
@@ -339,7 +338,7 @@ const stage1Pool = [
   {
     id: 's1-06', stage: 1,
     title: 'Official Credit Monitoring Offer',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "Official monitoring from your own bank? That's always a Soft Inquiry — safe!",
       luigi: "I have THREE credit monitoring apps. My therapist says this is 'excessive.'",
@@ -383,8 +382,9 @@ const stage1Pool = [
   /* S1-07 ── First Credit Card Bill Arrives ──────────────────────────────────── */
   {
     id: 's1-07', stage: 1,
+    requires: ['revolvingCredit'],
     title: 'First Bill Arrives',
-    setting: '📍 Junior Year — Age 16',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "This is the moment. The most important move in the whole game.",
       luigi: "I set up autopay the day I got the card. I wasn't taking any chances.",
@@ -451,15 +451,16 @@ const stage1Pool = [
   /* S1-08 ── Friend Wants to Be Authorized User ──────────────────────────────── */
   {
     id: 's1-08', stage: 1,
+    requires: ['revolvingCredit'],
     title: 'Friend Wants on Your Card',
-    setting: '📍 Junior Year — Age 17',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "If they overspend, it's YOUR Credit Report that pays the price. Not theirs.",
       luigi: "I said no to this once. The friendship survived. The credit score also survived.",
       peach: "Your credit file is not a gift to give. It is your financial reputation.",
       toad:  "My cousin asked me for this favor. I said yes. He's no longer my cousin."
     },
-    narrative: `Your friend asks to be added as an <span class="term" data-term="authorized_user">Authorized User</span> on your secured credit card. They promise to only use it for emergencies. If they overspend or you can't cover their charges, your account takes the hit — your <span class="term" data-term="credit_utilization_rate">Credit Utilization Rate</span> spikes and your <span class="term" data-term="payment_history">Payment History</span> suffers.`,
+    narrative: `Your friend asks to be added as an <span class="term" data-term="authorized_user">Authorized User</span> on your credit card. They promise to only use it for emergencies. If they overspend or you can't cover their charges, your account takes the hit — your <span class="term" data-term="credit_utilization_rate">Credit Utilization Rate</span> spikes and your <span class="term" data-term="payment_history">Payment History</span> suffers.`,
     decision: 'Do you add them?',
     choices: [
       {
@@ -499,7 +500,7 @@ const stage1Pool = [
   {
     id: 's1-09', stage: 1,
     title: 'Used Car — Installment Loan',
-    setting: '📍 Senior Year — Age 17',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "A car loan means credit mix improves! But monthly payments start... now.",
       luigi: "I made a spreadsheet of every payment before I agreed. 47 rows of data.",
@@ -524,7 +525,7 @@ const stage1Pool = [
         effects: {
           hasAnyCredit: true,
           creditMix:    { hasInstallmentLoan: true },
-          amountsOwed:  { limitDelta: 4000, balanceDelta: 4000 },
+          installment:  { balanceDelta: 4000 },
           newCredit:    { hardInquiries: 1 },
           lengthHistory:{ delta: 5 }
         }
@@ -549,8 +550,9 @@ const stage1Pool = [
   /* S1-10 ── Missed Payment — 35 Days Ago ────────────────────────────────────── */
   {
     id: 's1-10', stage: 1,
+    requires: ['revolvingCredit'],
     title: 'Late Payment — 35 Days In',
-    setting: '📍 Senior Year — Age 17',
+    setting: '📍 Senior Year — Age 18',
     characterBubble: {
       mario: "At 30 days, it gets REPORTED. You're already at 35. Call. The. Bank.",
       luigi: "30 days late = it hits your credit report. 35 days = it already hit. CALL.",
@@ -607,7 +609,7 @@ const stage1Pool = [
         },
         factorHighlight: ['paymentHistory'],
         effects: {
-          paymentHistory: { delta: -60, latePayments30: 1 },
+          paymentHistory: { delta: -60, latePayments30: 1, collections: 1 },
           flags: { perfectPaymentHistory: false, hadLatePayment: true, hadCollections: true }
         }
       }
@@ -621,7 +623,7 @@ const stage1Pool = [
 /* STAGE 2 — COLLEGE (Ages 18-21)                                               */
 /* ══════════════════════════════════════════════════════════════════════════════ */
 
-const stage2Pool = [
+export const stage2Pool = [
 
   /* S2-01 ── Federal Student Loans ──────────────────────────────────────────── */
   {
@@ -652,7 +654,7 @@ const stage2Pool = [
         effects: {
           hasAnyCredit: true,
           creditMix:    { hasInstallmentLoan: true },
-          amountsOwed:  { limitDelta: 5500, balanceDelta: 5500 },
+          installment:  { balanceDelta: 5500 },
           lengthHistory:{ delta: 5 },
           flags: { tookStudentLoans: true }
         }
@@ -672,7 +674,7 @@ const stage2Pool = [
         effects: {
           hasAnyCredit: true,
           creditMix:    { hasInstallmentLoan: true },
-          amountsOwed:  { limitDelta: 5500, balanceDelta: 6200 }, // interest accrued
+          installment:  { balanceDelta: 6200 }, // interest accrued
           lengthHistory:{ delta: 5 },
           flags: { tookStudentLoans: true }
         }
@@ -697,6 +699,7 @@ const stage2Pool = [
   /* S2-02 ── Spring Break Spending ──────────────────────────────────────────── */
   {
     id: 's2-02', stage: 2,
+    requires: ['revolvingCredit'],
     title: 'Spring Break on the Credit Card',
     setting: '📍 Sophomore Year — Age 19',
     characterBubble: {
@@ -831,8 +834,7 @@ const stage2Pool = [
         },
         factorHighlight: ['paymentHistory'],
         effects: {
-          paymentHistory: { delta: 5, onTimePayments: 1 },
-          amountsOwed:    { limitDelta: 650, balanceDelta: 650 }
+          paymentHistory: { delta: 5, onTimePayments: 1 }
         }
       },
       {
@@ -858,6 +860,7 @@ const stage2Pool = [
   /* S2-05 ── Credit Limit Raised ─────────────────────────────────────────────── */
   {
     id: 's2-05', stage: 2,
+    requires: ['revolvingCredit'],
     title: 'Credit Limit Raised — Temptation',
     setting: '📍 Junior Year — Age 20',
     characterBubble: {
@@ -968,6 +971,7 @@ const stage2Pool = [
   /* S2-07 ── Emergency Fund vs. Debt ─────────────────────────────────────────── */
   {
     id: 's2-07', stage: 2,
+    requires: ['revolvingCredit'],
     title: '$1,000 Tax Refund — Debt or Savings?',
     setting: '📍 Junior Year — Age 20',
     characterBubble: {
@@ -1035,6 +1039,7 @@ const stage2Pool = [
   /* S2-08 ── Balance Transfer Offer ─────────────────────────────────────────── */
   {
     id: 's2-08', stage: 2,
+    requires: ['revolvingCredit'],
     title: '0% Balance Transfer Offer',
     setting: '📍 Senior Year — Age 21',
     characterBubble: {
@@ -1084,6 +1089,7 @@ const stage2Pool = [
   /* S2-09 ── Close Old Secured Card? ─────────────────────────────────────────── */
   {
     id: 's2-09', stage: 2,
+    requires: ['revolvingCredit'],
     title: 'Keep or Close the Oldest Card?',
     setting: '📍 Senior Year — Age 21',
     characterBubble: {
@@ -1092,7 +1098,7 @@ const stage2Pool = [
       peach: "Length of Credit History is 15% of your score. That $65 fee is cheap protection.",
       toad:  "I closed my oldest card to save $50 once. Lost 40 points. Math did not math."
     },
-    narrative: `Your first secured credit card — the one you opened in high school — now charges a $65 annual fee. It's your oldest account. Closing it would save $65 but could hurt your <span class="term" data-term="credit_history">Credit History</span> length. Lenders value accounts that have been open a long time — it's 15% of your <span class="term" data-term="fico_score">FICO Score</span>.`,
+    narrative: `Your oldest credit card — the one you opened in high school — now charges a $65 annual fee. It's your oldest account. Closing it would save $65 but could hurt your <span class="term" data-term="credit_history">Credit History</span> length. Lenders value accounts that have been open a long time — it's 15% of your <span class="term" data-term="fico_score">FICO Score</span>.`,
     decision: 'What do you do?',
     choices: [
       {
@@ -1151,6 +1157,7 @@ const stage2Pool = [
   /* S2-10 ── Forgot to Pay — 5 Days Late ─────────────────────────────────────── */
   {
     id: 's2-10', stage: 2,
+    requires: ['revolvingCredit'],
     title: 'Payment Due — 5 Days Ago',
     setting: '📍 Senior Year — Age 21',
     characterBubble: {
@@ -1204,7 +1211,7 @@ const stage2Pool = [
 /* STAGE 3 — YOUNG ADULT (Ages 22-24)                                           */
 /* ══════════════════════════════════════════════════════════════════════════════ */
 
-const stage3Pool = [
+export const stage3Pool = [
 
   /* S3-01 ── Apartment Application [CONSEQUENCE EVENT] ─────────────────────── */
   {
@@ -1219,7 +1226,7 @@ const stage3Pool = [
       peach: "Your Credit Score has been building to exactly this moment.",
       toad:  "Whatever happens — it's information. Use it."
     },
-    narrative: `You're apartment hunting for your first post-college place. Most landlords run a credit check before approving a lease. The result you receive isn't determined by luck or personality — it's determined entirely by your <span class="term" data-term="credit_score">Credit Score</span>, built from every decision since age 16.`,
+    narrative: `You're apartment hunting for your first post-college place. Most landlords run a credit check before approving a lease. The result you receive isn't determined by luck or personality — it's determined entirely by your <span class="term" data-term="credit_score">Credit Score</span>, built from every decision since high school.`,
     outcomesByScore: [
       {
         minScore: 750,
@@ -1331,6 +1338,7 @@ const stage3Pool = [
   /* S3-04 ── Student Loan Repayment Begins ────────────────────────────────────── */
   {
     id: 's3-04', stage: 3,
+    requires: ['studentLoans'],
     title: 'Student Loan Repayment Starts',
     setting: '📍 Age 22 — Post-Graduation',
     characterBubble: {
@@ -1399,6 +1407,7 @@ const stage3Pool = [
   /* S3-05 ── Debt Consolidation Loan ─────────────────────────────────────────── */
   {
     id: 's3-05', stage: 3,
+    requires: ['revolvingCredit'],
     title: 'Debt Consolidation Offer',
     setting: '📍 Age 23 — Managing Multiple Debts',
     characterBubble: {
@@ -1451,6 +1460,7 @@ const stage3Pool = [
   /* S3-06 ── New Rewards Credit Card ─────────────────────────────────────────── */
   {
     id: 's3-06', stage: 3,
+    requires: ['revolvingCredit'],
     title: 'Premium Rewards Card Offer',
     setting: '📍 Age 23 — Building Credit',
     characterBubble: {
@@ -1501,6 +1511,7 @@ const stage3Pool = [
   /* S3-07 ── Old Debt in Collections ─────────────────────────────────────────── */
   {
     id: 's3-07', stage: 3,
+    requires: ['collections'],
     title: 'Dealing with Old Collections Debt',
     setting: '📍 Age 23 — Clearing the Past',
     characterBubble: {
@@ -1509,7 +1520,7 @@ const stage3Pool = [
       peach: "Unpaid collections are financial anchors. Remove them or resolve them.",
       toad:  "I had a collection once. Negotiated pay-for-delete. It worked. TRY THIS FIRST."
     },
-    narrative: `An old medical bill from sophomore year — $650 that went to <span class="term" data-term="collections">Collections</span> — is still on your <span class="term" data-term="credit_report">Credit Report</span>. You have money now. Collections accounts stay for 7 years from the first delinquency date, but how you resolve them can affect your <span class="term" data-term="payment_history">Payment History</span> score differently.`,
+    narrative: `An old $650 debt that went to <span class="term" data-term="collections">Collections</span> — is still on your <span class="term" data-term="credit_report">Credit Report</span>. You have money now. Collections accounts stay for 7 years from the first delinquency date, but how you resolve them can affect your <span class="term" data-term="payment_history">Payment History</span> score differently.`,
     decision: 'How do you handle it?',
     choices: [
       {
@@ -1566,6 +1577,7 @@ const stage3Pool = [
   /* S3-08 ── $1,500 Windfall ──────────────────────────────────────────────────── */
   {
     id: 's3-08', stage: 3,
+    requires: ['revolvingCredit'],
     title: '$1,500 Bonus — Debt or Emergency Fund?',
     setting: '📍 Age 23 — Year-End Windfall',
     characterBubble: {
@@ -1646,6 +1658,7 @@ const stage3Pool = [
     choices: [
       {
         label: "Pay the $500 fee — sounds worth it",
+        bubble: 'credit-repair-scam', // character reacts to the scam
         consequenceTitle: 'You Got Scammed',
         consequenceEmoji: '💥',
         consequenceText: "$500 gone. They disputed a few items, most were denied, nothing changed. Legitimate credit issues cannot be removed by law — only errors can. And you could have disputed errors yourself, for free, in 30 minutes. This is what predatory credit repair companies do every day.",
@@ -1701,7 +1714,7 @@ const stage3Pool = [
     characterBubble: {
       mario: "This is World 1-1 for adulthood. And every life decision built to this moment.",
       luigi: "I ran the numbers. A 1% rate difference on $180K over 30 years = $38,000.",
-      peach: "Every decision since age 16 converges here. This is why credit scores matter.",
+      peach: "Every decision since high school converges here. This is why credit scores matter.",
       toad:  "Whatever you decide — you understand now why the score mattered all along."
     },
     narrative: `You've been pre-approved for a $180,000 mortgage. The <span class="term" data-term="interest_rate">Interest Rate</span> you receive depends entirely on your <span class="term" data-term="fico_score">FICO Score</span>. On a 30-year mortgage, a 1% difference in rate = approximately $38,000 in additional interest paid. Every decision in this simulation was building to this moment — for better or worse.`,
@@ -1711,7 +1724,7 @@ const stage3Pool = [
         label: "Apply now — your score is ready",
         consequenceTitle: 'Mortgage Approved',
         consequenceEmoji: '✅',
-        consequenceText: "Mortgage approved. The interest rate you received reflects every credit decision made since age 16 — every on-time payment, every low utilization choice, every account carefully managed. High scorers save tens of thousands over the life of a mortgage. This is the payoff.",
+        consequenceText: "Mortgage approved. The interest rate you received reflects every credit decision made since high school — every on-time payment, every low utilization choice, every account carefully managed. High scorers save tens of thousands over the life of a mortgage. This is the payoff.",
         consequenceBubble: {
           mario: "You saved the castle AND your credit score! HERO!",
           luigi: "Everything led to this. Every payment. Every choice. This.",
@@ -1722,7 +1735,7 @@ const stage3Pool = [
         effects: {
           creditMix:    { hasMortgage: true },
           newCredit:    { hardInquiries: 1 },
-          amountsOwed:  { limitDelta: 180000, balanceDelta: 180000 },
+          installment:  { balanceDelta: 180000 },
           lengthHistory:{ delta: 5 }
         }
       },
@@ -1762,22 +1775,3 @@ const stage3Pool = [
 ]; // end stage3Pool
 
 
-/* ── Utility: Draw Random Stage Pool ────────────────────────────────────────── */
-function drawScenarios(stagePool) {
-  // Keep any alwaysFirst scenario at position 0
-  const forced  = stagePool.filter(s => s.alwaysFirst);
-  const rest    = stagePool.filter(s => !s.alwaysFirst);
-  const shuffled = fisherYates(rest);
-  const needed  = 4 - forced.length;
-  return [...forced, ...shuffled.slice(0, needed)];
-}
-
-// Fisher-Yates (local copy so scenarios.js is self-contained for the shuffle)
-function fisherYates(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}

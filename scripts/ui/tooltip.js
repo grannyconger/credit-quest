@@ -1,10 +1,11 @@
 /* ── Credit Quest: Hover-to-Define Tooltip System ───────────────────────────── */
 
-'use strict';
-
 let _dictionary = null;
 
-async function loadDictionary() {
+/* Synchronous access once loadDictionary() has resolved (null before that) */
+export const getDictionary = () => _dictionary;
+
+export async function loadDictionary() {
   if (_dictionary) return _dictionary;
   try {
     const res = await fetch('./data/pf_dictionary.json');
@@ -34,7 +35,7 @@ function getTooltipEl() {
 }
 
 /* Abbreviation aliases: maps short data-term values to full dictionary keys */
-const TERM_ALIASES = {
+export const TERM_ALIASES = {
   'apr':   'annual_percentage_rate_apr',
   'fico':  'fico_score',
 };
@@ -95,7 +96,7 @@ function hideTooltip() {
 
 /* ── Attach listeners to all .term spans inside a container ─────────────────── */
 
-function attachTooltips(container, dict) {
+export function attachTooltips(container, dict) {
   const terms = container.querySelectorAll('.term[data-term]');
   terms.forEach(el => {
     el.addEventListener('mouseenter', () => showTooltip(el, dict));
@@ -107,7 +108,7 @@ function attachTooltips(container, dict) {
 
 /* ── Track encountered terms for vocabulary review ──────────────────────────── */
 
-function trackTerms(container, gameState) {
+export function trackTerms(container, gameState) {
   const terms = container.querySelectorAll('.term[data-term]');
   terms.forEach(el => {
     const normalized = (el.dataset.term || '').replace(/-/g, '_').toLowerCase();
