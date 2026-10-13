@@ -1,7 +1,6 @@
 /* ── Credit Quest: Sound Engine ─────────────────────────────────────────────── */
 /* WAV files in sounds/ for new sounds; Web Audio API synth for existing ones.  */
 
-'use strict';
 
 let audioCtx = null;
 let _muted   = false;
@@ -102,7 +101,7 @@ function playBuffer(name, volume = 0.85) {
 
 /* ── Sound Library ────────────────────────────────────────────────────────────── */
 
-const sounds = {
+export const sounds = {
   /* ── Existing synthesized sounds — unchanged ── */
   goodChoice:    () => { if (!_synthAllowed('goodChoice', 400)) return; [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.15), i * 100)); },
   badChoice:     () => { if (!_synthAllowed('badChoice', 500)) return; playTone(220, 0.2, 'sawtooth'); setTimeout(() => playTone(196, 0.3, 'sawtooth'), 150); },
@@ -128,11 +127,11 @@ const sounds = {
   thanks:     () => playBuffer('thanks'),
 };
 
-function setMuted(val) { _muted = val; }
-function isMuted()     { return _muted; }
+export function setMuted(val) { _muted = val; }
+export function isMuted()     { return _muted; }
 
 /* Call on first user gesture to unlock AudioContext and decode all WAVs */
-async function initAudio() {
+export async function initAudio() {
   try {
     getCtx();
     await decodeAllBuffers();

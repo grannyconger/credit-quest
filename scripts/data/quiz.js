@@ -1,8 +1,7 @@
-/* ── Credit Quest: Quiz Bank + Draw Logic ────────────────────────────────────── */
+/* ── Credit Quest: Quiz Bank ────────────────────────────────────── */
 
-'use strict';
 
-const quizBank = [
+export const quizBank = [
   {
     id: 'q01', answer: 'C',
     question: 'What are the two most important factors in calculating your credit score?',
@@ -287,24 +286,3 @@ quizBank.forEach(q => {
   if (QUIZ_DEEP_DIVES[q.id]) q.deepDive = QUIZ_DEEP_DIVES[q.id];
 });
 
-/* ── Fisher-Yates Shuffle ─────────────────────────────────────────────────────── */
-function fisherYates(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-/* Initialize shuffled draw order at game start.
-   Returns an array of 21 shuffled indices into quizBank. */
-function initQuizDrawOrder() {
-  return fisherYates([...Array(quizBank.length).keys()]);
-}
-
-/* Get 3 questions for a bridge (bridge 1 = indices 0-2, bridge 2 = 3-5) */
-function getQuizBatch(drawOrder, bridgeNumber) {
-  const start = (bridgeNumber - 1) * 3;
-  return drawOrder.slice(start, start + 3).map(idx => quizBank[idx]);
-}
